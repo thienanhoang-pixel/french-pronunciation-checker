@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>French Pronunciation - Context Aware</title>
+  <title>French Pronunciation Checker</title>
   <style>
-    /* CSS GIỮ NGUYÊN */
+    /* CSS GỐC - KHÔNG SỬA GIAO DIỆN */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; width: 100%; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; overflow: hidden; }
@@ -15,16 +15,23 @@
     .api-status { background: rgba(255, 255, 255, 0.15); color: white; padding: 8px 16px; border-radius: 8px; margin-top: 8px; font-size: 14px; display: inline-block; }
     .api-status.active { background: rgba(72, 187, 120, 0.3); }
     .main-content { flex: 1; display: flex; flex-direction: column; max-width: 800px; width: 100%; margin: 0 auto; min-height: 0; }
+    
+    /* KHUNG HIỂN THỊ CHỮ - QUAN TRỌNG CHO HIỆU ỨNG CUỘN */
     .text-display-wrapper { flex: 1; background: #ffffff; border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); overflow: hidden; margin-bottom: 20px; position: relative; min-height: 0; }
-    .text-display { height: 100%; overflow: auto; position: relative; padding: 32px; scroll-behavior: smooth; }
-    .text-content { width: 100%; line-height: 2.2; }
-    .word { display: inline-block; font-size: 24px; margin: 0 4px; padding: 2px 4px; border-radius: 4px; transition: all 0.3s ease; color: #4a5568; border-bottom: 2px solid transparent; }
+    .text-display { height: 100%; overflow: hidden; position: relative; padding: 32px; display: flex; align-items: flex-end; } /* Flex-end để chữ bắt đầu từ dưới */
     
-    /* Màu xanh khi đúng */
-    .word.correct { background-color: #c6f6d5; color: #22543d; border-bottom: 2px solid #48bb78; }
+    .text-content { width: 100%; padding: 0; transform: translateY(100%); transition: none; }
     
-    /* Gợi ý vị trí đọc tiếp theo (Con trỏ ảo) */
-    .word.suggest { border-bottom: 2px solid #ed8936; background-color: #fffaf0; }
+    /* Animation cuộn lên trong 60s */
+    .text-content.scrolling { transition: transform 60s linear; transform: translateY(-100%); }
+    
+    .word { display: inline; font-size: 24px; line-height: 1.8; padding: 2px 4px; border-radius: 4px; transition: background-color 0.2s ease, color 0.2s ease; color: #2d3748; }
+    
+    /* MÀU XANH KHI ĐỌC ĐÚNG */
+    .word.correct { background-color: #48bb78; color: #ffffff; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+    
+    /* Con trỏ gợi ý (nếu cần) */
+    .word.suggest { border-bottom: 3px solid #ed8936; }
 
     .controls { display: flex; gap: 16px; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); margin-bottom: 16px; }
     .btn { padding: 14px 28px; font-size: 16px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); min-width: 120px; }
@@ -104,9 +111,8 @@
     let timerInterval = null;
     let stats = { correct: 0, total: 0 };
     
-    // BIẾN QUAN TRỌNG: Lưu vị trí từ đúng gần nhất để định vị ngữ cảnh
-    let lastSuccessIndex = -1;
-
+    // --- CẤU HÌNH XỬ LÝ ---
+    let lastSuccessIndex = -1; // Neo ngữ cảnh
     let mediaRecorder = null;
     let audioChunks = [];
     let sendDataInterval = null;
@@ -161,15 +167,20 @@
 
         mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 });
         audioChunks = [];
+        
+        // Thu thập data
         mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunks.push(event.data); };
+        
+        // Start recorder continuous
         mediaRecorder.start(1000); 
         recordingIndicator.classList.add('active');
 
+        // Gửi data mỗi 2 giây
         sendDataInterval = setInterval(() => {
             if (!isRunning || mediaRecorder.state !== 'recording') return;
             if (audioChunks.length > 0) {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                audioChunks = []; 
+                audioChunks = []; // Reset buffer
                 if (audioBlob.size > 3000) transcribeAudio(audioBlob);
             }
         }, 2000);
@@ -207,58 +218,36 @@
     function markWordCorrect(index) {
         const el = document.getElementById(`word-${index}`);
         if (el && !el.classList.contains('correct')) {
-            el.classList.add('correct');
-            // Cuộn màn hình nhẹ nhàng đến từ vừa đọc
-            el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+            el.classList.add('correct'); // CLASS NÀY SẼ LÀM TỪ ĐÓ XANH LÊN
             stats.correct++;
             updateStats();
         }
     }
 
-    // --- LOGIC MỚI: CHECK THEO NGỮ CẢNH (Context Aware) ---
     function checkPronunciationContextAware(spokenText) {
       if (!isRunning) return;
       
       const spokenWords = normalizeText(spokenText).split(/\s+/).filter(w => w.length > 0);
-      
-      // Mảng lưu tạm các index đã match trong lượt nói này
-      // Để đảm bảo 1 từ nói ra không match 2 vị trí trong bài
       const matchedIndicesInThisBatch = new Set();
 
       spokenWords.forEach((spokenWord) => {
         let bestCandidate = { index: -1, score: -1 };
 
-        // Duyệt qua TOÀN BỘ các từ trong bài
         for (let i = 0; i < currentText.length; i++) {
-          
-          // 1. Nếu từ này đã xanh rồi -> Bỏ qua
           if (isWordMarked(i)) continue;
-          
-          // 2. Nếu từ này vừa được match bởi từ trước đó trong cùng câu nói -> Bỏ qua
           if (matchedIndicesInThisBatch.has(i)) continue;
 
           const expectedWord = normalizeText(currentText[i]);
-          
-          // Tính độ giống nhau (Similarity)
           let similarity = calculateSimilarity(spokenWord, expectedWord);
           
-          if (similarity >= 0.75) { // Chỉ xét nếu giống >= 75%
-            
-            // TÍNH ĐIỂM ƯU TIÊN (PRIORITY SCORE)
-            // Công thức: Similarity - (Khoảng cách địa lý * Hệ số phạt)
-            
-            // Khoảng cách từ vị trí đang xét (i) đến từ đúng cuối cùng (lastSuccessIndex)
-            // Nếu lastSuccessIndex = -1 (chưa đọc gì), coi như đang ở đầu bài (0)
+          if (similarity >= 0.75) {
             const anchor = lastSuccessIndex === -1 ? 0 : lastSuccessIndex;
             const distance = Math.abs(i - anchor);
             
-            // Nếu từ này nằm NGAY SAU từ vừa đọc đúng -> Thưởng điểm cực lớn (ưu tiên tuyệt đối)
+            // Logic ưu tiên từ gần "neo" (Context Aware)
             let bonus = 0;
             if (i === lastSuccessIndex + 1) bonus = 0.2; 
-            else if (i > lastSuccessIndex && i < lastSuccessIndex + 5) bonus = 0.1; // Nằm gần phía sau
-
-            // Phạt khoảng cách: Càng xa anchor càng bị trừ điểm
-            // Giúp máy ưu tiên chọn chữ "le" ở câu 1 hơn là chữ "le" ở câu 3
+            else if (i > lastSuccessIndex && i < lastSuccessIndex + 5) bonus = 0.1;
             const penalty = distance * 0.005; 
 
             const finalScore = similarity + bonus - penalty;
@@ -269,42 +258,31 @@
           }
         }
 
-        // CHỐT KẾT QUẢ CHO TỪ NÀY
         if (bestCandidate.index !== -1) {
           markWordCorrect(bestCandidate.index);
           matchedIndicesInThisBatch.add(bestCandidate.index);
-          
-          // Cập nhật mỏ neo (Anchor) mới
-          // Để các từ tiếp theo trong câu nói sẽ bám vào từ này
-          lastSuccessIndex = bestCandidate.index;
+          lastSuccessIndex = bestCandidate.index; // Cập nhật neo
         }
       });
-
-      // Update gợi ý (Con trỏ màu cam)
-      updateSuggestionCursor();
-
-      if (stats.correct >= currentText.length) stopExercise();
-    }
-
-    function updateSuggestionCursor() {
+      
+      // Update suggestion underline
       document.querySelectorAll('.word').forEach(w => w.classList.remove('suggest'));
-      // Tìm từ đầu tiên chưa đọc để gợi ý
       for (let i = 0; i < currentText.length; i++) {
         if (!isWordMarked(i)) {
           document.getElementById(`word-${i}`).classList.add('suggest');
           break;
         }
       }
+
+      if (stats.correct >= currentText.length) stopExercise();
     }
 
     function calculateSimilarity(w1, w2) {
       if (!w1 || !w2) return 0;
       if (w1 === w2) return 1.0;
-      
       const p1 = toPhonetic(w1);
       const p2 = toPhonetic(w2);
       if (p1 === p2 && p1.length > 0) return 0.95;
-
       const dist = levenshteinDistance(w1, w2);
       const len = Math.max(w1.length, w2.length);
       return (len - dist) / len;
@@ -333,8 +311,9 @@
         span.textContent = word + ' ';
         textContent.appendChild(span);
       });
-      lastSuccessIndex = -1; // Reset anchor
-      updateSuggestionCursor();
+      lastSuccessIndex = -1;
+      textContent.classList.remove('scrolling'); // Reset trạng thái cuộn
+      void textContent.offsetHeight; // Force reflow
     }
 
     async function startExercise() {
@@ -342,7 +321,7 @@
       isRunning = true;
       timeRemaining = 60;
       stats = { correct: 0, total: 0 };
-      lastSuccessIndex = -1; // Reset anchor
+      lastSuccessIndex = -1;
 
       document.querySelectorAll('.word').forEach(w => {
         w.classList.remove('correct', 'suggest');
@@ -350,12 +329,16 @@
       
       updateStats();
       startBtn.disabled = true;
+      
+      // KÍCH HOẠT HIỆU ỨNG CUỘN
+      textContent.classList.add('scrolling');
+      
       apiStatus.classList.add('active');
       apiStatus.textContent = '🟢 Đang nghe...';
       
       startTimer();
       await startRecording();
-      showNotification('🎤 Bắt đầu!');
+      showNotification('🎤 Bắt đầu! Chữ sẽ tự chạy...');
     }
 
     function startTimer() {
@@ -378,6 +361,7 @@
       }
       recordingIndicator.classList.remove('active');
       startBtn.disabled = false;
+      textContent.classList.remove('scrolling'); // Dừng cuộn
       apiStatus.classList.remove('active');
       apiStatus.textContent = '🤖 OpenAI Whisper Ready';
       const acc = currentText.length > 0 ? Math.round((stats.correct / currentText.length) * 100) : 0;
