@@ -5,17 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>French Pronunciation Checker</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html, body {
-      height: 100%;
-      width: 100%;
-    }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; width: 100%; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -23,7 +14,6 @@
       flex-direction: column;
       overflow: hidden;
     }
-    
     .app-container {
       width: 100%;
       height: 100%;
@@ -32,19 +22,13 @@
       padding: 24px;
       overflow: auto;
     }
-    
-    .header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    
+    .header { text-align: center; margin-bottom: 24px; }
     .header h1 {
       color: #ffffff;
       font-size: 32px;
       font-weight: 700;
       text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
     }
-
     .api-status {
       background: rgba(255, 255, 255, 0.15);
       color: white;
@@ -54,11 +38,7 @@
       font-size: 14px;
       display: inline-block;
     }
-
-    .api-status.active {
-      background: rgba(72, 187, 120, 0.3);
-    }
-
+    .api-status.active { background: rgba(72, 187, 120, 0.3); }
     .debug-panel {
       background: rgba(0, 0, 0, 0.8);
       color: #48bb78;
@@ -67,23 +47,14 @@
       margin-top: 8px;
       font-size: 12px;
       font-family: monospace;
-      max-height: 100px;
+      max-height: 120px;
       overflow-y: auto;
       text-align: left;
     }
+    .debug-panel .log { margin: 2px 0; }
+    .debug-panel .log.error { color: #f56565; }
+    .debug-panel .log.success { color: #48bb78; }
 
-    .debug-panel .log {
-      margin: 2px 0;
-    }
-
-    .debug-panel .log.error {
-      color: #f56565;
-    }
-
-    .debug-panel .log.success {
-      color: #48bb78;
-    }
-    
     .main-content {
       flex: 1;
       display: flex;
@@ -93,7 +64,6 @@
       margin: 0 auto;
       min-height: 0;
     }
-    
     .text-display-wrapper {
       flex: 1;
       background: #ffffff;
@@ -104,39 +74,23 @@
       position: relative;
       min-height: 0;
     }
-    
-    .text-display {
-      padding: 32px;
-    }
-    
-    .text-content {
-      width: 100%;
-    }
-    
+    .text-display { padding: 32px; }
     .word {
       display: inline;
       font-size: 26px;
       line-height: 2.2;
       padding: 6px 8px;
       border-radius: 6px;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      transition: background-color 0.2s ease, color 0.2s ease;
       color: #2d3748;
       margin: 3px;
       cursor: default;
     }
-    
     .word.correct {
       background-color: #48bb78;
       color: #ffffff;
       font-weight: 600;
     }
-    
-    .word.incorrect {
-      background-color: #f56565;
-      color: #ffffff;
-      font-weight: 600;
-    }
-    
     .word.current {
       background-color: #ffd700;
       color: #2d3748;
@@ -144,12 +98,8 @@
       animation: pulse-current 1.5s infinite;
       font-size: 30px;
     }
+    @keyframes pulse-current { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 
-    @keyframes pulse-current {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-    }
-    
     .controls {
       display: flex;
       gap: 16px;
@@ -162,7 +112,6 @@
       margin-bottom: 16px;
       flex-wrap: wrap;
     }
-    
     .btn {
       padding: 14px 28px;
       font-size: 16px;
@@ -170,38 +119,14 @@
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       min-width: 120px;
     }
-    
-    .btn-start {
-      background: #48bb78;
-      color: #ffffff;
-    }
-    
-    .btn-start:hover:not(:disabled) {
-      background: #38a169;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
-    }
-    
-    .btn-reset {
-      background: #ed8936;
-      color: #ffffff;
-    }
-    
-    .btn-reset:hover:not(:disabled) {
-      background: #dd6b20;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(237, 137, 54, 0.4);
-    }
-    
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
+    .btn-start { background: #48bb78; color: #ffffff; }
+    .btn-reset { background: #ed8936; color: #ffffff; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .timer {
       display: flex;
       align-items: center;
@@ -215,7 +140,7 @@
       min-width: 140px;
       justify-content: center;
     }
-    
+
     .stats {
       background: rgba(255, 255, 255, 0.95);
       padding: 20px;
@@ -227,31 +152,11 @@
       flex-wrap: wrap;
       gap: 16px;
     }
-    
-    .stat-item {
-      text-align: center;
-    }
-    
-    .stat-label {
-      font-size: 14px;
-      color: #718096;
-      margin-bottom: 4px;
-      font-weight: 500;
-    }
-    
-    .stat-value {
-      font-size: 28px;
-      font-weight: 700;
-      color: #2d3748;
-    }
-    
-    .stat-value.correct {
-      color: #48bb78;
-    }
-    
-    .stat-value.incorrect {
-      color: #f56565;
-    }
+    .stat-item { text-align: center; }
+    .stat-label { font-size: 14px; color: #718096; margin-bottom: 4px; font-weight: 500; }
+    .stat-value { font-size: 28px; font-weight: 700; color: #2d3748; }
+    .stat-value.correct { color: #48bb78; }
+    .stat-value.incorrect { color: #f56565; }
 
     .notification {
       position: fixed;
@@ -268,16 +173,9 @@
       color: white;
       animation: slideDown 0.3s ease;
     }
-
     @keyframes slideDown {
-      from {
-        transform: translate(-50%, -100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(-50%);
-        opacity: 1;
-      }
+      from { transform: translate(-50%, -100%); opacity: 0; }
+      to { transform: translateX(-50%); opacity: 1; }
     }
 
     .recording-indicator {
@@ -294,11 +192,7 @@
       font-size: 14px;
       z-index: 1001;
     }
-
-    .recording-indicator.active {
-      display: flex;
-    }
-
+    .recording-indicator.active { display: flex; }
     .pulse {
       width: 10px;
       height: 10px;
@@ -306,58 +200,35 @@
       border-radius: 50%;
       animation: pulse 1s infinite;
     }
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.3); }
-    }
-    
     @media (max-width: 768px) {
-      .app-container {
-        padding: 16px;
-      }
-      
-      .header h1 {
-        font-size: 24px;
-      }
-      
-      .word {
-        font-size: 20px;
-      }
-      
-      .controls {
-        flex-direction: column;
-        gap: 12px;
-      }
-      
-      .btn {
-        width: 100%;
-        min-width: auto;
-      }
-      
-      .timer {
-        width: 100%;
-      }
+      .app-container { padding: 16px; }
+      .header h1 { font-size: 24px; }
+      .word { font-size: 20px; }
+      .controls { flex-direction: column; gap: 12px; }
+      .btn { width: 100%; min-width: auto; }
+      .timer { width: 100%; }
     }
   </style>
 </head>
 <body>
   <div class="app-container">
     <header class="header">
-      <h1>🇫🇷 French Pronunciation Checker</h1>
-      <div class="api-status" id="apiStatus">🤖 OpenAI Whisper Ready</div>
+      <h1>French Pronunciation Checker</h1>
+      <div class="api-status" id="apiStatus">OpenAI Whisper Ready</div>
       <div class="debug-panel" id="debugPanel">
         <div class="log">Chờ bắt đầu...</div>
       </div>
     </header>
-    
+
     <main class="main-content">
       <div class="text-display-wrapper">
         <div class="text-display">
           <div class="text-content" id="textContent"></div>
         </div>
       </div>
-      
+
       <div class="controls">
         <button class="btn btn-start" id="startBtn">Démarrer</button>
         <div class="timer">
@@ -366,7 +237,7 @@
         </div>
         <button class="btn btn-reset" id="resetBtn">Nouveau texte</button>
       </div>
-      
+
       <div class="stats">
         <div class="stat-item">
           <div class="stat-label">Précision</div>
@@ -390,34 +261,34 @@
   </div>
 
   <script>
+    // ====== DATA ======
     const frenchTexts = [
-      {
-        level: "A1",
-        text: "Bonjour je mappelle Marie Jhabite à Paris Jaime beaucoup le chocolat et les croissants"
-      },
-      {
-        level: "A2",
-        text: "Hier jai visité le Louvre avec ma famille Cétait magnifique Nous avons vu la Joconde"
-      },
-      {
-        level: "B1",
-        text: "Chaque matin Julien se réveille avant le lever du soleil Il prend quelques minutes pour regarder le ciel"
-      }
+      { level: "A1", text: "Bonjour je mappelle Marie Jhabite à Paris Jaime beaucoup le chocolat et les croissants" },
+      { level: "A2", text: "Hier jai visité le Louvre avec ma famille Cétait magnifique Nous avons vu la Joconde" },
+      { level: "B1", text: "Chaque matin Julien se réveille avant le lever du soleil Il prend quelques minutes pour regarder le ciel" }
     ];
 
+    // ====== STATE ======
     let currentText = [];
     let isRunning = false;
+
     let timeRemaining = 60;
     let timerInterval = null;
+
     let stats = { correct: 0 };
+
+    // mic / recorder reuse
+    let stream = null;
     let mediaRecorder = null;
     let audioChunks = [];
     let recordingTimeout = null;
-    // ===== AUDIO VOLUME CHECK (QUAN TRỌNG) =====
+
+    // volume/VAD
     let audioContext = null;
     let analyser = null;
     let sourceNode = null;
-
+    let rafId = null;
+    let maxRms = 0;
 
     const elements = {
       textContent: document.getElementById('textContent'),
@@ -438,12 +309,9 @@
       log.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
       elements.debugPanel.appendChild(log);
       elements.debugPanel.scrollTop = elements.debugPanel.scrollHeight;
-      
-      // Giữ tối đa 50 dòng log
-      while (elements.debugPanel.children.length > 50) {
+      while (elements.debugPanel.children.length > 60) {
         elements.debugPanel.removeChild(elements.debugPanel.firstChild);
       }
-      
       console.log(message);
     }
 
@@ -453,138 +321,13 @@
       notification.style.background = isError ? '#f56565' : '#48bb78';
       notification.textContent = message;
       document.body.appendChild(notification);
-      
+
       setTimeout(() => {
         notification.style.animation = 'slideDown 0.3s ease reverse';
         setTimeout(() => notification.remove(), 300);
-      }, 3000);
+      }, 2500);
     }
 
-    async function transcribeAudio(audioBlob) {
-      try {
-        elements.recordingIndicator.classList.add('active');
-        addDebugLog(`📤 Gửi audio ${audioBlob.size} bytes...`, 'info');
-
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.webm');
-
-        const response = await fetch('/api/transcribe', {
-          method: 'POST',
-          body: formData
-        });
-
-        elements.recordingIndicator.classList.remove('active');
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-        
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        if (!result.text || result.text.trim().length === 0) {
-          addDebugLog('⚠️ API trả về rỗng', 'error');
-          return null;
-        }
-
-        addDebugLog(`✅ Whisper: "${result.text}"`, 'success');
-        return result.text;
-
-      } catch (error) {
-        elements.recordingIndicator.classList.remove('active');
-        addDebugLog(`❌ Lỗi: ${error.message}`, 'error');
-        return null;
-      }
-    }
-
-async function startRecording() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        channelCount: 1,
-        sampleRate: 48000,
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true
-      }
-    });
-
-    // ====== SETUP AUDIO VOLUME CHECK ======
-    audioContext = new AudioContext();
-    sourceNode = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    sourceNode.connect(analyser);
-
-    mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'audio/webm;codecs=opus',
-      audioBitsPerSecond: 128000
-    });
-
-    audioChunks = [];
-
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        audioChunks.push(event.data);
-      }
-    };
-
-    mediaRecorder.onstop = async () => {
-      if (!isRunning || audioChunks.length === 0) return;
-
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-      audioChunks = [];
-
-      const volume = getAverageVolume();
-      addDebugLog(`🔊 RMS volume: ${volume.toFixed(4)}`);
-
-      // ❌ THỞ / IM LẶNG → BỎ QUA
-      if (volume < 0.03) {
-        addDebugLog('🚫 Âm lượng quá nhỏ → KHÔNG gửi Whisper', 'error');
-      } else if (audioBlob.size < 3000) {
-        addDebugLog('🚫 Audio quá ngắn → bỏ qua', 'error');
-      } else {
-        const text = await transcribeAudio(audioBlob);
-        if (text && isRunning) {
-          checkPronunciation(text);
-        }
-      }
-
-      // Ghi tiếp nếu còn từ chưa đọc
-      if (isRunning && timeRemaining > 0) {
-        const hasUnread = currentText.some((_, i) => !isWordMarked(i));
-        if (hasUnread) {
-          setTimeout(() => {
-            if (isRunning) startRecording();
-          }, 200);
-        }
-      }
-    };
-
-    mediaRecorder.start();
-
-    // ⏱️ CẮT AUDIO NGẮN → TRÁNH WHISPER ĐOÁN BỪA
-    recordingTimeout = setTimeout(() => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-      }
-    }, 1800);
-
-  } catch (error) {
-    addDebugLog(`❌ Lỗi mic: ${error.message}`, 'error');
-    showNotification('❌ Lỗi microphone', true);
-    stopExercise();
-  }
-}
-
-
-    // ========================================
-    // THUẬT TOÁN SO SÁNH NGHIÊM NGẶT
-    // ========================================
-    
     function normalizeText(text) {
       if (!text) return '';
       return text.toLowerCase()
@@ -594,47 +337,27 @@ async function startRecording() {
         .replace(/\s+/g, ' ')
         .trim();
     }
-    function getAverageVolume() {
-  if (!analyser) return 0;
-
-  const buffer = new Uint8Array(analyser.fftSize);
-  analyser.getByteTimeDomainData(buffer);
-
-  let sum = 0;
-  for (let i = 0; i < buffer.length; i++) {
-    const value = (buffer[i] - 128) / 128;
-    sum += value * value;
-  }
-
-  return Math.sqrt(sum / buffer.length);
-}
-
 
     function toPhonetic(word) {
       if (!word) return '';
       let p = word.toLowerCase();
-      
-      // Xử lý âm câm cuối
+
       p = p.replace(/[tdspxz]$/, '');
       p = p.replace(/ent$/, 'e').replace(/er$/, 'e').replace(/ez$/, 'e').replace(/es$/, 'e');
-      
-      // Nhóm nguyên âm
+
       p = p.replace(/eau/g, 'o').replace(/au/g, 'o');
       p = p.replace(/ai/g, 'e').replace(/ei/g, 'e');
       p = p.replace(/ou/g, 'u').replace(/eu/g, 'e');
-      p = p.replace(/oi/g, 'wa').replace(/oin/g, 'wan');
+      p = p.replace(/oin/g, 'wan').replace(/oi/g, 'wa');
       p = p.replace(/ain/g, 'an').replace(/ein/g, 'an').replace(/in/g, 'an');
       p = p.replace(/on/g, 'o').replace(/an/g, 'a').replace(/en/g, 'a');
       p = p.replace(/un/g, 'an');
-      
-      // Phụ âm đặc biệt
+
       p = p.replace(/ch/g, 'sh').replace(/ph/g, 'f').replace(/qu/g, 'k');
       p = p.replace(/c([eiy])/g, 's$1').replace(/g([eiy])/g, 'j$1');
       p = p.replace(/gn/g, 'ni').replace(/ill/g, 'i').replace(/y/g, 'i');
-      
-      // Loại bỏ lặp
+
       p = p.replace(/(.)\1+/g, '$1');
-      
       return p;
     }
 
@@ -642,55 +365,35 @@ async function startRecording() {
       const m = [];
       for (let i = 0; i <= s2.length; i++) m[i] = [i];
       for (let j = 0; j <= s1.length; j++) m[0][j] = j;
-      
+
       for (let i = 1; i <= s2.length; i++) {
         for (let j = 1; j <= s1.length; j++) {
-          m[i][j] = s2[i-1] === s1[j-1] ? m[i-1][j-1] : 
-            Math.min(m[i-1][j-1] + 1, m[i][j-1] + 1, m[i-1][j] + 1);
+          m[i][j] = s2[i-1] === s1[j-1]
+            ? m[i-1][j-1]
+            : Math.min(m[i-1][j-1] + 1, m[i][j-1] + 1, m[i-1][j] + 1);
         }
       }
       return m[s2.length][s1.length];
     }
 
-    // NGHIÊM NGẶT: Chỉ chấp nhận từ khi similarity >= 75%
     function calculateSimilarity(w1, w2) {
       if (!w1 || !w2) return 0;
-      if (w1 === w2) return 1.0; // 100% match
-      
-      // Danh sách từ đặc biệt - chỉ những từ THẬT SỰ đồng âm
-      const homophones = {
-        'est': ['et', 'es'],
-        'sont': ['son'],
-        'a': ['ah'],
-        'et': ['est', 'es']
-      };
+      if (w1 === w2) return 1.0;
 
-      // Kiểm tra đồng âm chặt chẽ
-      if (homophones[w2]?.includes(w1) || homophones[w1]?.includes(w2)) {
-        return 0.95; // Gần như hoàn hảo
-      }
-      
       const p1 = toPhonetic(w1);
       const p2 = toPhonetic(w2);
-      
-      // Phonetic phải GIỐNG HỆT
-      if (p1 === p2 && p1.length > 0) {
-        return 0.92; // Phát âm giống nhau
-      }
 
-      // Tính similarity dựa trên Levenshtein distance
       const maxLen = Math.max(w1.length, w2.length);
       const maxPhoneLen = Math.max(p1.length, p2.length);
-      
+
       const textDist = levenshteinDistance(w1, w2);
       const phoneDist = levenshteinDistance(p1, p2);
-      
+
       const textSim = maxLen > 0 ? (maxLen - textDist) / maxLen : 0;
       const phoneSim = maxPhoneLen > 0 ? (maxPhoneLen - phoneDist) / maxPhoneLen : 0;
-      
-      // Ưu tiên phonetic nhưng KHÔNG quá khoan dung
-      const combined = Math.max(textSim * 0.6, phoneSim * 0.8);
-      
+
+      // quan trọng: KHÔNG dùng Math.max (dễ match nhầm)
+      const combined = (textSim * 0.55 + phoneSim * 0.45);
       return combined;
     }
 
@@ -699,122 +402,236 @@ async function startRecording() {
       return el && el.classList.contains('correct');
     }
 
-    function markWordCorrect(wordIndex) {
-      const el = document.getElementById(`word-${wordIndex}`);
-      if (el && !el.classList.contains('correct')) {
-        el.classList.remove('current', 'incorrect');
-        el.classList.add('correct');
-        stats.correct++;
-        
-        // Scroll to view
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        return true;
+    function getFirstUnreadIndex() {
+      for (let i = 0; i < currentText.length; i++) {
+        if (!isWordMarked(i)) return i;
       }
-      return false;
+      return -1;
     }
 
-    // NGHIÊM NGẶT: CHỈ đánh dấu xanh khi NÓI ĐÚNG
-    function checkPronunciation(spokenText) {
-      if (!isRunning) return;
-      
-      if (!spokenText || spokenText.trim().length === 0) {
-        return;
-      }
-
-      const spokenWords = normalizeText(spokenText).split(/\s+/).filter(w => w.length > 0);
-      if (spokenWords.length === 0) return;
-      
-      addDebugLog(`🎯 Check: ${spokenWords.join(', ')}`, 'info');
-
-      // NGHIÊM NGẶT: Ngưỡng chấp nhận 75%
-      const STRICT_THRESHOLD = 0.75;
-      
-      const matchedIndices = new Set();
-      
-      // Tìm từ chưa đọc đầu tiên
-      let firstUnreadIndex = -1;
+    function setCurrentWord(index) {
       for (let i = 0; i < currentText.length; i++) {
-        if (!isWordMarked(i)) {
-          firstUnreadIndex = i;
-          break;
-        }
+        const el = document.getElementById(`word-${i}`);
+        if (!el) continue;
+        el.classList.toggle('current', i === index);
       }
-      
-      if (firstUnreadIndex === -1) {
-        stopExercise();
-        return;
-      }
-      
-      // Match từng từ - CHỈ match trong vùng hợp lý (không quá 5 từ)
-      spokenWords.forEach((spokenWord) => {
-        let bestMatch = { index: -1, similarity: 0 };
-        
-        // CHỈ tìm trong 5 từ tiếp theo (không cho phép nhảy cóc)
-        const searchEnd = Math.min(firstUnreadIndex + 5, currentText.length);
-        
-        for (let i = firstUnreadIndex; i < searchEnd; i++) {
-          if (isWordMarked(i) || matchedIndices.has(i)) continue;
-          
-          const expectedWord = normalizeText(currentText[i]);
-          const sim = calculateSimilarity(spokenWord, expectedWord);
-          
-          if (sim > bestMatch.similarity) {
-            bestMatch = { index: i, similarity: sim };
-          }
-        }
+      const el = document.getElementById(`word-${index}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
-        // CHỈ ĐÁNH DẤU XANH KHI similarity >= 75%
-        if (bestMatch.index >= 0 && bestMatch.similarity >= STRICT_THRESHOLD) {
-          if (markWordCorrect(bestMatch.index)) {
-            matchedIndices.add(bestMatch.index);
-            addDebugLog(`✅ "${spokenWord}" = "${currentText[bestMatch.index]}" (${Math.round(bestMatch.similarity * 100)}%)`, 'success');
-          }
-        } else if (bestMatch.index >= 0) {
-          addDebugLog(`❌ "${spokenWord}" ≠ "${currentText[bestMatch.index]}" (${Math.round(bestMatch.similarity * 100)}% < 75%)`, 'error');
-        } else {
-          addDebugLog(`❓ "${spokenWord}" không tìm thấy match`, 'error');
+    function markWordCorrect(wordIndex) {
+      const el = document.getElementById(`word-${wordIndex}`);
+      if (!el || el.classList.contains('correct')) return false;
+
+      el.classList.remove('current');
+      el.classList.add('correct');
+      stats.correct++;
+      return true;
+    }
+
+    function updateStats() {
+      const total = currentText.length || 1;
+      const unread = Math.max(0, currentText.length - stats.correct);
+      const accuracy = Math.round((stats.correct / total) * 100);
+
+      elements.correctDisplay.textContent = stats.correct;
+      elements.unreadDisplay.textContent = unread;
+      elements.accuracyDisplay.textContent = `${accuracy}%`;
+    }
+
+    // ====== AUDIO / VAD ======
+    function getRmsNow() {
+      if (!analyser) return 0;
+      const buffer = new Uint8Array(analyser.fftSize);
+      analyser.getByteTimeDomainData(buffer);
+
+      let sum = 0;
+      for (let i = 0; i < buffer.length; i++) {
+        const v = (buffer[i] - 128) / 128;
+        sum += v * v;
+      }
+      return Math.sqrt(sum / buffer.length);
+    }
+
+    function startVAD() {
+      maxRms = 0;
+      const loop = () => {
+        const rms = getRmsNow();
+        if (rms > maxRms) maxRms = rms;
+        rafId = requestAnimationFrame(loop);
+      };
+      loop();
+    }
+
+    function stopVAD() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+
+    async function ensureMicReady() {
+      if (stream) return;
+
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false
         }
       });
 
-      // Update current word indicator
-      for (let i = 0; i < currentText.length; i++) {
-        const el = document.getElementById(`word-${i}`);
-        if (!isWordMarked(i)) {
-          el.classList.add('current');
-          // Xóa current từ các từ khác
-          for (let j = 0; j < i; j++) {
-            const otherEl = document.getElementById(`word-${j}`);
-            if (otherEl) otherEl.classList.remove('current');
-          }
-          for (let j = i + 1; j < currentText.length; j++) {
-            const otherEl = document.getElementById(`word-${j}`);
-            if (otherEl) otherEl.classList.remove('current');
-          }
-          break;
-        }
-      }
-
-      // Kiểm tra hoàn thành
-      let allRead = true;
-      for (let i = 0; i < currentText.length; i++) {
-        if (!isWordMarked(i)) {
-          allRead = false;
-          break;
-        }
-      }
-      
-      if (allRead) {
-        stopExercise();
-      }
-
-      updateStats();
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      sourceNode = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      sourceNode.connect(analyser);
     }
 
+    async function transcribeAudio(audioBlob) {
+      try {
+        elements.recordingIndicator.classList.add('active');
+        addDebugLog(`Upload audio: ${audioBlob.size} bytes`);
+
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.webm');
+
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+
+        const text = (result.text || '').trim();
+        if (!text) return null;
+
+        addDebugLog(`Whisper: "${text}"`, 'success');
+        return text;
+      } catch (e) {
+        addDebugLog(`API error: ${e.message}`, 'error');
+        return null;
+      } finally {
+        elements.recordingIndicator.classList.remove('active');
+      }
+    }
+
+    async function recordOneChunk() {
+      if (!isRunning) return;
+
+      await ensureMicReady();
+
+      // mimeType fallback (tránh lỗi trình duyệt)
+      const options = {};
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options.mimeType = 'audio/webm;codecs=opus';
+      }
+
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream, options);
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        stopVAD();
+        clearTimeout(recordingTimeout);
+
+        if (!isRunning) return;
+
+        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        audioChunks = [];
+
+        addDebugLog(`maxRMS: ${maxRms.toFixed(4)} | blob: ${blob.size} bytes`);
+
+        // Ngưỡng chống “tự đoán bừa”
+        const RMS_THRESHOLD = 0.06;      // tăng lên để tránh noise
+        const MIN_SIZE = 7000;           // quá nhỏ dễ hallucinate
+
+        if (maxRms < RMS_THRESHOLD) {
+          addDebugLog('Skip: no real voice detected', 'error');
+        } else if (blob.size < MIN_SIZE) {
+          addDebugLog('Skip: audio too short', 'error');
+        } else {
+          const text = await transcribeAudio(blob);
+          if (text && isRunning) checkPronunciation(text);
+        }
+
+        // record tiếp nếu chưa xong
+        if (isRunning && timeRemaining > 0) {
+          const idx = getFirstUnreadIndex();
+          if (idx !== -1) {
+            setTimeout(() => { if (isRunning) recordOneChunk(); }, 200);
+          } else {
+            stopExercise(true);
+          }
+        }
+      };
+
+      startVAD();
+      mediaRecorder.start();
+
+      // chunk dài hơn chút để Whisper đỡ đoán bừa
+      recordingTimeout = setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      }, 2500);
+    }
+
+    // ====== PRONUNCIATION CHECK (SEQUENTIAL) ======
+    function checkPronunciation(spokenText) {
+      if (!isRunning) return;
+
+      const spokenWords = normalizeText(spokenText)
+        .split(/\s+/)
+        .filter(w => w.length > 0);
+
+      if (spokenWords.length === 0) return;
+
+      // bỏ vài từ “nhiễu” hay xuất hiện
+      const banned = new Set(['euh', 'heu', 'hum', 'mmm']);
+      const filtered = spokenWords.filter(w => !banned.has(w) && w.length >= 2);
+
+      addDebugLog(`Check words: ${filtered.join(', ')}`);
+
+      let currentIndex = getFirstUnreadIndex();
+      if (currentIndex === -1) {
+        stopExercise(true);
+        return;
+      }
+
+      // chỉ match theo thứ tự: nói đúng từ hiện tại thì mới xanh
+      const THRESHOLD = 0.86;
+
+      for (const w of filtered) {
+        if (currentIndex === -1) break;
+
+        const expected = normalizeText(currentText[currentIndex]);
+        const sim = calculateSimilarity(w, expected);
+
+        if (sim >= THRESHOLD) {
+          markWordCorrect(currentIndex);
+          addDebugLog(`OK: "${w}" == "${currentText[currentIndex]}" (${Math.round(sim*100)}%)`, 'success');
+          currentIndex = getFirstUnreadIndex();
+        } else {
+          addDebugLog(`NO: "${w}" != "${currentText[currentIndex]}" (${Math.round(sim*100)}%)`, 'error');
+        }
+      }
+
+      const next = getFirstUnreadIndex();
+      if (next !== -1) setCurrentWord(next);
+
+      updateStats();
+
+      if (getFirstUnreadIndex() === -1) stopExercise(true);
+    }
+
+    // ====== UI / FLOW ======
     function loadRandomText() {
-      const text = frenchTexts[Math.floor(Math.random() * frenchTexts.length)];
-      currentText = text.text.split(/\s+/);
-      
+      const pick = frenchTexts[Math.floor(Math.random() * frenchTexts.length)];
+      currentText = pick.text.split(/\s+/);
+
       elements.textContent.innerHTML = '';
       currentText.forEach((word, i) => {
         const span = document.createElement('span');
@@ -824,41 +641,102 @@ async function startRecording() {
         elements.textContent.appendChild(span);
       });
 
-      if (currentText.length > 0) {
-        document.getElementById('word-0').classList.add('current');
-      }
+      stats = { correct: 0 };
+      updateStats();
+      if (currentText.length > 0) setCurrentWord(0);
+
+      addDebugLog(`Loaded text (${pick.level}): ${pick.text}`);
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      const start = Date.now();
+      const durationMs = 60000;
+
+      timerInterval = setInterval(() => {
+        const elapsed = Date.now() - start;
+        const remainingMs = Math.max(0, durationMs - elapsed);
+        timeRemaining = Math.ceil(remainingMs / 1000);
+
+        const m = Math.floor(timeRemaining / 60);
+        const s = String(timeRemaining % 60).padStart(2, '0');
+        elements.timerDisplay.textContent = `${m}:${s}`;
+
+        if (remainingMs <= 0) stopExercise(false);
+      }, 200);
+    }
+
+    function stopExercise(completed) {
+      if (!isRunning) return;
+      isRunning = false;
+
+      clearInterval(timerInterval);
+      timerInterval = null;
+
+      clearTimeout(recordingTimeout);
+      recordingTimeout = null;
+
+      stopVAD();
+
+      try {
+        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      } catch {}
+
+      elements.startBtn.disabled = false;
+      elements.apiStatus.classList.remove('active');
+      elements.apiStatus.textContent = 'OpenAI Whisper Ready';
+
+      if (completed) showNotification('Hoàn thành!', false);
+      else showNotification('Hết giờ!', true);
+
+      addDebugLog(`Stopped. Completed=${completed}`);
     }
 
     async function startExercise() {
       if (isRunning) return;
 
-      isRunning = true;
-      timeRemaining = 60;
+      // reset
+      document.querySelectorAll('.word').forEach(w => w.classList.remove('correct', 'current'));
       stats = { correct: 0 };
-
-      document.querySelectorAll('.word').forEach(w => {
-        w.classList.remove('correct', 'incorrect', 'current');
-      });
-
-      if (currentText.length > 0) {
-        document.getElementById('word-0').classList.add('current');
-      }
-
       updateStats();
+      timeRemaining = 60;
+      elements.timerDisplay.textContent = '1:00';
+
+      isRunning = true;
       elements.startBtn.disabled = true;
       elements.apiStatus.classList.add('active');
-      elements.apiStatus.textContent = '🟢 Listening...';
-      
-      addDebugLog('🎬 Bắt đầu session...', 'info');
+      elements.apiStatus.textContent = 'Listening...';
+
+      addDebugLog('Session started');
+      showNotification('Bấm và đọc theo từ đang vàng.');
+
+      // set current
+      const first = getFirstUnreadIndex();
+      if (first !== -1) setCurrentWord(first);
+
       startTimer();
-      startRecording();
-      showNotification('🎤 Parlez clairement!');
+
+      try {
+        await ensureMicReady();
+        recordOneChunk();
+      } catch (e) {
+        addDebugLog(`Mic error: ${e.message}`, 'error');
+        showNotification('Lỗi microphone / không cấp quyền mic', true);
+        stopExercise(false);
+      }
     }
 
-    function startTimer() {
-      const startTime = Date.now();
-      const duration = 60000;
-      
-      timerInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.
+    function resetText() {
+      stopExercise(false);
+      loadRandomText();
+    }
+
+    // ====== EVENTS ======
+    elements.startBtn.addEventListener('click', startExercise);
+    elements.resetBtn.addEventListener('click', resetText);
+
+    // init
+    loadRandomText();
+  </script>
+</body>
+</html>
