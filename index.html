@@ -5,54 +5,224 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>French Pronunciation Checker</title>
   <style>
-    /* CSS GỐC - KHÔNG SỬA GIAO DIỆN */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; width: 100%; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; flex-direction: column; overflow: hidden; }
-    .app-container { width: 100%; height: 100%; display: flex; flex-direction: column; padding: 24px; overflow: auto; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .app-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow: auto;
+    }
     .header { text-align: center; margin-bottom: 24px; }
-    .header h1 { color: #ffffff; font-size: 32px; font-weight: 700; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); }
-    .api-status { background: rgba(255, 255, 255, 0.15); color: white; padding: 8px 16px; border-radius: 8px; margin-top: 8px; font-size: 14px; display: inline-block; }
+    .header h1 {
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .api-status {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-top: 8px;
+      font-size: 14px;
+      display: inline-block;
+    }
     .api-status.active { background: rgba(72, 187, 120, 0.3); }
-    .main-content { flex: 1; display: flex; flex-direction: column; max-width: 800px; width: 100%; margin: 0 auto; min-height: 0; }
-    
-    /* KHUNG HIỂN THỊ CHỮ - QUAN TRỌNG CHO HIỆU ỨNG CUỘN */
-    .text-display-wrapper { flex: 1; background: #ffffff; border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15); overflow: hidden; margin-bottom: 20px; position: relative; min-height: 0; }
-    .text-display { height: 100%; overflow: hidden; position: relative; padding: 32px; display: flex; align-items: flex-end; } /* Flex-end để chữ bắt đầu từ dưới */
-    
-    .text-content { width: 100%; padding: 0; transform: translateY(100%); transition: none; }
-    
-    /* Animation cuộn lên trong 60s */
-    .text-content.scrolling { transition: transform 60s linear; transform: translateY(-100%); }
-    
-    .word { display: inline; font-size: 24px; line-height: 1.8; padding: 2px 4px; border-radius: 4px; transition: background-color 0.2s ease, color 0.2s ease; color: #2d3748; }
-    
-    /* MÀU XANH KHI ĐỌC ĐÚNG */
-    .word.correct { background-color: #48bb78; color: #ffffff; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-    
-    /* Con trỏ gợi ý (nếu cần) */
-    .word.suggest { border-bottom: 3px solid #ed8936; }
-
-    .controls { display: flex; gap: 16px; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); margin-bottom: 16px; }
-    .btn { padding: 14px 28px; font-size: 16px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); min-width: 120px; }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      min-height: 0;
+    }
+    .text-display-wrapper {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      margin-bottom: 20px;
+      position: relative;
+      min-height: 0;
+    }
+    .text-display {
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      padding: 32px;
+      display: flex;
+      align-items: flex-end;
+    }
+    .text-content {
+      width: 100%;
+      padding: 0;
+      transform: translateY(100%);
+      transition: none;
+    }
+    .text-content.scrolling {
+      transition: transform 60s linear;
+      transform: translateY(-100%);
+    }
+    .word {
+      display: inline;
+      font-size: 24px;
+      line-height: 1.8;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      color: #2d3748;
+    }
+    .word.correct { background-color: #48bb78; color: #ffffff; }
+    .word.incorrect { background-color: #f56565; color: #ffffff; }
+    .word.current {
+      background-color: #ffd700;
+      color: #2d3748;
+      font-weight: 600;
+      animation: pulse-current 1.5s infinite;
+    }
+    @keyframes pulse-current {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      margin-bottom: 16px;
+    }
+    .btn {
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 120px;
+    }
     .btn-start { background: #48bb78; color: #ffffff; }
-    .btn-start:hover:not(:disabled) { background: #38a169; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4); }
+    .btn-start:hover:not(:disabled) {
+      background: #38a169;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+    }
     .btn-reset { background: #ed8936; color: #ffffff; }
-    .btn-reset:hover:not(:disabled) { background: #dd6b20; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(237, 137, 54, 0.4); }
+    .btn-reset:hover:not(:disabled) {
+      background: #dd6b20;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(237, 137, 54, 0.4);
+    }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .timer { display: flex; align-items: center; gap: 12px; padding: 12px 24px; background: #edf2f7; border-radius: 12px; font-size: 20px; font-weight: 700; color: #2d3748; min-width: 140px; justify-content: center; }
-    .stats { background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 16px; }
+    .timer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      background: #edf2f7;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #2d3748;
+      min-width: 140px;
+      justify-content: center;
+    }
+    .stats {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
     .stat-item { text-align: center; }
-    .stat-label { font-size: 14px; color: #718096; margin-bottom: 4px; font-weight: 500; }
-    .stat-value { font-size: 28px; font-weight: 700; color: #2d3748; }
+    .stat-label {
+      font-size: 14px;
+      color: #718096;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2d3748;
+    }
     .stat-value.correct { color: #48bb78; }
-    .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; text-align: center; max-width: 90%; font-weight: 600; color: white; animation: slideDown 0.3s ease; }
-    @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
-    .recording-indicator { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 0, 0, 0.8); color: white; padding: 12px 20px; border-radius: 12px; display: none; align-items: center; gap: 10px; font-size: 14px; z-index: 1001; }
+    .stat-value.incorrect { color: #f56565; }
+    .notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000;
+      text-align: center;
+      max-width: 90%;
+      font-weight: 600;
+      color: white;
+      animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown {
+      from { transform: translate(-50%, -100%); opacity: 0; }
+      to { transform: translateX(-50%); opacity: 1; }
+    }
+    .recording-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      z-index: 1001;
+    }
     .recording-indicator.active { display: flex; }
-    .pulse { width: 10px; height: 10px; background: #f56565; border-radius: 50%; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
-    @media (max-width: 768px) { .app-container { padding: 16px; } .header h1 { font-size: 24px; } .word { font-size: 18px; } .controls { flex-direction: column; gap: 12px; } .btn { width: 100%; min-width: auto; } .timer { width: 100%; } }
+    .pulse {
+      width: 10px;
+      height: 10px;
+      background: #f56565;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    @media (max-width: 768px) {
+      .app-container { padding: 16px; }
+      .header h1 { font-size: 24px; }
+      .word { font-size: 18px; }
+      .controls { flex-direction: column; gap: 12px; }
+      .btn { width: 100%; min-width: auto; }
+      .timer { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -69,53 +239,62 @@
       </div>
       <div class="controls">
         <button class="btn btn-start" id="startBtn">Démarrer</button>
-        <div class="timer"><span>⏱️</span><span id="timerDisplay">1:00</span></div>
+        <div class="timer">
+          <span>⏱️</span>
+          <span id="timerDisplay">1:00</span>
+        </div>
         <button class="btn btn-reset" id="resetBtn">Nouveau texte</button>
       </div>
       <div class="stats">
-        <div class="stat-item"><div class="stat-label">Précision</div><div class="stat-value" id="accuracyDisplay">0%</div></div>
-        <div class="stat-item"><div class="stat-label">Correct</div><div class="stat-value correct" id="correctDisplay">0</div></div>
-        <div class="stat-item"><div class="stat-label">Total</div><div class="stat-value" id="totalDisplay">0</div></div>
+        <div class="stat-item">
+          <div class="stat-label">Précision</div>
+          <div class="stat-value" id="accuracyDisplay">0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Correct</div>
+          <div class="stat-value correct" id="correctDisplay">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Incorrect</div>
+          <div class="stat-value incorrect" id="incorrectDisplay">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="totalDisplay">0</div>
+        </div>
       </div>
     </main>
   </div>
-  <div class="recording-indicator" id="recordingIndicator"><div class="pulse"></div><span>Đang nghe (Mic liên tục)...</span></div>
+  <div class="recording-indicator" id="recordingIndicator">
+    <div class="pulse"></div>
+    <span>🎤 Écoute...</span>
+  </div>
 
   <script>
     const frenchTexts = [
       {
         level: "A1",
-        text: "Bonjour je m'appelle Marie. J'habite à Paris. J'aime beaucoup le chocolat et les croissants. Tous les matins je vais à la boulangerie. Je bois du café avec mes amis. Nous parlons de notre journée. Le weekend je visite des musées. J'adore l'art et la culture française."
+        text: "Bonjour je m'appelle Marie. J'habite à Paris. J'aime beaucoup le chocolat et les croissants."
       },
       {
         level: "A2",
-        text: "Hier j'ai visité le Louvre avec ma famille. C'était magnifique. Nous avons vu la Joconde et beaucoup d'autres tableaux célèbres. Après le musée nous sommes allés manger dans un restaurant traditionnel. J'ai commandé du boeuf bourguignon. C'était excellent. Mon frère a pris des escargots pour la première fois."
+        text: "Hier j'ai visité le Louvre avec ma famille. C'était magnifique. Nous avons vu la Joconde."
       },
       {
         level: "B1",
-        text: "Chaque matin Julien se réveille avant le lever du soleil. Il prend quelques minutes pour regarder le ciel et respirer profondément. Pour lui le temps est précieux et chaque journée mérite d'être vécue avec attention. Autrefois Julien passait ses journées à courir sans réfléchir. Il travaillait beaucoup et parlait peu avec les autres."
-      },
-      {
-        level: "B2",
-        text: "La révolution numérique a profondément transformé nos modes de vie et nos interactions sociales. Si elle offre des opportunités sans précédent en termes de communication et d'accès à l'information elle soulève également des questions importantes concernant la protection de la vie privée et la dépendance technologique."
-      },
-      {
-        level: "C1",
-        text: "L'anthropocène cette nouvelle ère géologique marquée par l'impact prépondérant des activités humaines sur les écosystèmes terrestres constitue un défi existentiel pour notre civilisation. Les scientifiques s'accordent sur l'urgence d'une transformation radicale de nos modèles économiques et sociétaux."
+        text: "Chaque matin Julien se réveille avant le lever du soleil. Il prend quelques minutes pour regarder le ciel."
       }
     ];
 
     let currentText = [];
+    let currentWordIndex = 0;
     let isRunning = false;
     let timeRemaining = 60;
     let timerInterval = null;
-    let stats = { correct: 0, total: 0 };
-    
-    // --- CẤU HÌNH XỬ LÝ ---
-    let lastSuccessIndex = -1; // Neo ngữ cảnh
+    let stats = { correct: 0, incorrect: 0, total: 0 };
     let mediaRecorder = null;
-    let audioChunks = [];
-    let sendDataInterval = null;
+    let processingQueue = [];
+    let isProcessing = false;
 
     const textContent = document.getElementById('textContent');
     const startBtn = document.getElementById('startBtn');
@@ -123,9 +302,13 @@
     const timerDisplay = document.getElementById('timerDisplay');
     const accuracyDisplay = document.getElementById('accuracyDisplay');
     const correctDisplay = document.getElementById('correctDisplay');
+    const incorrectDisplay = document.getElementById('incorrectDisplay');
     const totalDisplay = document.getElementById('totalDisplay');
     const recordingIndicator = document.getElementById('recordingIndicator');
     const apiStatus = document.getElementById('apiStatus');
+
+    // WINDOW SIZE: Chỉ match trong phạm vi 15 từ tiếp theo
+    const MATCH_WINDOW_SIZE = 15;
 
     function showNotification(message, isError = false) {
       const notification = document.createElement('div');
@@ -143,47 +326,69 @@
       try {
         const formData = new FormData();
         formData.append('audio', audioBlob, 'audio.webm');
-        const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
-        if (!response.ok) return null;
-        const result = await response.json();
-        if (result.error) return null;
-        
-        if (result.text && result.text.trim().length > 0) {
-            console.log('🗣️ User said:', result.text);
-            if (isRunning) checkPronunciationContextAware(result.text);
+
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `HTTP ${response.status}`);
         }
+
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+
+        console.log('✅ Transcription:', result.text);
         return result.text;
+
       } catch (error) {
         console.error('❌ Transcription error:', error);
         return null;
       }
     }
 
-    async function startRecording() {
+    // CONTINUOUS RECORDING: Mic luôn bật, cứ 2.5s gửi 1 chunk
+    async function startContinuousRecording() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: { channelCount: 1, sampleRate: 48000, echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
+          audio: { 
+            channelCount: 1, 
+            sampleRate: 48000,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
         });
 
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 128000 });
-        audioChunks = [];
-        
-        // Thu thập data
-        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) audioChunks.push(event.data); };
-        
-        // Start recorder continuous
-        mediaRecorder.start(1000); 
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm;codecs=opus',
+          audioBitsPerSecond: 128000
+        });
+
+        let audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        // Mỗi 2.5s tạo 1 audio blob và thêm vào queue
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 2000 && isRunning) {
+            const audioBlob = new Blob([event.data], { type: 'audio/webm' });
+            processingQueue.push(audioBlob);
+            processQueue(); // Xử lý queue ngay lập tức
+          }
+        };
+
+        // Start recording với timeslice 2500ms (cứ 2.5s gọi ondataavailable)
+        mediaRecorder.start(2500);
         recordingIndicator.classList.add('active');
 
-        // Gửi data mỗi 2 giây
-        sendDataInterval = setInterval(() => {
-            if (!isRunning || mediaRecorder.state !== 'recording') return;
-            if (audioChunks.length > 0) {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                audioChunks = []; // Reset buffer
-                if (audioBlob.size > 3000) transcribeAudio(audioBlob);
-            }
-        }, 2000);
+        console.log('🎤 Continuous recording started');
 
       } catch (error) {
         console.error('❌ Recording error:', error);
@@ -192,10 +397,31 @@
       }
     }
 
+    // XỬ LÝ QUEUE: Transcribe từng chunk một (không chồng chéo)
+    async function processQueue() {
+      if (isProcessing || processingQueue.length === 0) return;
+      
+      isProcessing = true;
+      const audioBlob = processingQueue.shift();
+
+      const text = await transcribeAudio(audioBlob);
+      if (text && isRunning) {
+        checkPronunciation(text);
+      }
+
+      isProcessing = false;
+      
+      // Tiếp tục xử lý queue nếu còn
+      if (processingQueue.length > 0) {
+        processQueue();
+      }
+    }
+
     function normalizeText(text) {
       if (!text) return '';
       return text.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9\s]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
@@ -205,87 +431,153 @@
       if (!word) return '';
       let p = word.toLowerCase();
       p = p.replace(/[tdspxz]$/, '');
-      p = p.replace(/ent$/, 'e').replace(/er$/, 'e').replace(/ez$/, 'e');
+      p = p.replace(/ent$/, 'e').replace(/er$/, 'e').replace(/ez$/, 'e').replace(/es$/, 'e');
+      p = p.replace(/eau/g, 'o').replace(/au/g, 'o');
+      p = p.replace(/ai/g, 'e').replace(/ei/g, 'e');
+      p = p.replace(/ou/g, 'u').replace(/eu/g, 'e');
+      p = p.replace(/oi/g, 'wa').replace(/oin/g, 'wan');
+      p = p.replace(/ain/g, 'an').replace(/ein/g, 'an').replace(/in/g, 'an');
+      p = p.replace(/on/g, 'o').replace(/an/g, 'a').replace(/en/g, 'a').replace(/un/g, 'an');
+      p = p.replace(/ch/g, 'sh').replace(/ph/g, 'f').replace(/qu/g, 'k');
+      p = p.replace(/c([eiy])/g, 's$1').replace(/g([eiy])/g, 'j$1');
+      p = p.replace(/gn/g, 'ni').replace(/ill/g, 'i').replace(/y/g, 'i');
       p = p.replace(/(.)\1+/g, '$1');
       return p;
     }
 
     function isWordMarked(index) {
-        const el = document.getElementById(`word-${index}`);
-        return el && (el.classList.contains('correct'));
+      const el = document.getElementById(`word-${index}`);
+      return el && (el.classList.contains('correct') || el.classList.contains('incorrect'));
     }
 
-    function markWordCorrect(index) {
-        const el = document.getElementById(`word-${index}`);
-        if (el && !el.classList.contains('correct')) {
-            el.classList.add('correct'); // CLASS NÀY SẼ LÀM TỪ ĐÓ XANH LÊN
-            stats.correct++;
-            updateStats();
-        }
+    function markWord(index, isCorrect) {
+      const el = document.getElementById(`word-${index}`);
+      if (!el) return;
+      
+      el.classList.remove('current', 'correct', 'incorrect');
+      el.classList.add(isCorrect ? 'correct' : 'incorrect');
+      
+      if (isCorrect) {
+        stats.correct++;
+      } else {
+        stats.incorrect++;
+      }
+      stats.total++;
     }
 
-    function checkPronunciationContextAware(spokenText) {
+    // SEQUENTIAL MATCHING: Chỉ match trong window gần nhất
+    function checkPronunciation(spokenText) {
       if (!isRunning) return;
-      
+      if (!spokenText || spokenText.trim().length === 0) return;
+
       const spokenWords = normalizeText(spokenText).split(/\s+/).filter(w => w.length > 0);
-      const matchedIndicesInThisBatch = new Set();
-
-      spokenWords.forEach((spokenWord) => {
-        let bestCandidate = { index: -1, score: -1 };
-
-        for (let i = 0; i < currentText.length; i++) {
-          if (isWordMarked(i)) continue;
-          if (matchedIndicesInThisBatch.has(i)) continue;
-
-          const expectedWord = normalizeText(currentText[i]);
-          let similarity = calculateSimilarity(spokenWord, expectedWord);
-          
-          if (similarity >= 0.75) {
-            const anchor = lastSuccessIndex === -1 ? 0 : lastSuccessIndex;
-            const distance = Math.abs(i - anchor);
-            
-            // Logic ưu tiên từ gần "neo" (Context Aware)
-            let bonus = 0;
-            if (i === lastSuccessIndex + 1) bonus = 0.2; 
-            else if (i > lastSuccessIndex && i < lastSuccessIndex + 5) bonus = 0.1;
-            const penalty = distance * 0.005; 
-
-            const finalScore = similarity + bonus - penalty;
-
-            if (finalScore > bestCandidate.score) {
-              bestCandidate = { index: i, score: finalScore };
-            }
-          }
-        }
-
-        if (bestCandidate.index !== -1) {
-          markWordCorrect(bestCandidate.index);
-          matchedIndicesInThisBatch.add(bestCandidate.index);
-          lastSuccessIndex = bestCandidate.index; // Cập nhật neo
-        }
-      });
+      if (spokenWords.length === 0) return;
       
-      // Update suggestion underline
-      document.querySelectorAll('.word').forEach(w => w.classList.remove('suggest'));
+      console.log('🎯 Processing:', spokenWords.join(', '));
+
+      // Tìm vị trí bắt đầu (từ chưa đánh dấu đầu tiên)
+      let startIndex = 0;
       for (let i = 0; i < currentText.length; i++) {
         if (!isWordMarked(i)) {
-          document.getElementById(`word-${i}`).classList.add('suggest');
+          startIndex = i;
           break;
         }
       }
 
-      if (stats.correct >= currentText.length) stopExercise();
+      const matchedIndices = new Set();
+
+      // Match từng từ trong transcription
+      spokenWords.forEach((spokenWord) => {
+        let bestMatch = { index: -1, similarity: 0, phoneticMatch: false };
+        
+        // CHỈ TÌM TRONG WINDOW: từ startIndex → startIndex + MATCH_WINDOW_SIZE
+        const windowEnd = Math.min(startIndex + MATCH_WINDOW_SIZE, currentText.length);
+        
+        for (let i = startIndex; i < windowEnd; i++) {
+          if (isWordMarked(i) || matchedIndices.has(i)) continue;
+          
+          const expectedWord = normalizeText(currentText[i]);
+          const sim = calculateSimilarity(spokenWord, expectedWord);
+          
+          const p1 = toPhonetic(spokenWord);
+          const p2 = toPhonetic(expectedWord);
+          const phoneticSim = p1.length > 0 && p2.length > 0 ? 
+            (Math.max(p1.length, p2.length) - levenshteinDistance(p1, p2)) / Math.max(p1.length, p2.length) : 0;
+          const isPhoneticMatch = phoneticSim >= 0.6;
+          
+          const score = isPhoneticMatch ? sim + 0.3 : sim;
+          
+          if (score > bestMatch.similarity || 
+              (score === bestMatch.similarity && isPhoneticMatch && !bestMatch.phoneticMatch)) {
+            bestMatch = { index: i, similarity: sim, phoneticMatch: isPhoneticMatch };
+          }
+        }
+
+        // Đánh dấu nếu match
+        if (bestMatch.index >= 0 && (bestMatch.phoneticMatch || bestMatch.similarity >= 0.6)) {
+          markWord(bestMatch.index, true);
+          matchedIndices.add(bestMatch.index);
+          console.log(`✅ "${spokenWord}" → "${currentText[bestMatch.index]}" (${Math.round(bestMatch.similarity * 100)}%)`);
+          
+          // Cập nhật startIndex để lần sau tìm từ vị trí này trở đi
+          if (bestMatch.index >= startIndex) {
+            startIndex = bestMatch.index + 1;
+          }
+        }
+      });
+
+      // Cập nhật current word indicator
+      let foundCurrent = false;
+      for (let i = 0; i < currentText.length; i++) {
+        const el = document.getElementById(`word-${i}`);
+        if (!el) continue;
+        
+        if (!isWordMarked(i)) {
+          if (!foundCurrent) {
+            el.classList.add('current');
+            foundCurrent = true;
+          } else {
+            el.classList.remove('current');
+          }
+        } else {
+          el.classList.remove('current');
+        }
+      }
+
+      // Nếu hết từ thì dừng
+      if (!foundCurrent) {
+        stopExercise();
+      }
+
+      updateStats();
     }
 
     function calculateSimilarity(w1, w2) {
       if (!w1 || !w2) return 0;
-      if (w1 === w2) return 1.0;
+      if (w1 === w2) return 1;
+      
+      const special = {
+        'un': ['1', 'une'], 'deux': ['2'], 'trois': ['3'],
+        'est': ['et', 'ai', 'es'], 'sont': ['son'],
+        'jai': ['je', 'j'], 'suis': ['sui'],
+        'vous': ['vou'], 'nous': ['nou']
+      };
+
+      if (special[w2]?.includes(w1) || special[w1]?.includes(w2)) return 0.95;
+
       const p1 = toPhonetic(w1);
       const p2 = toPhonetic(w2);
-      if (p1 === p2 && p1.length > 0) return 0.95;
-      const dist = levenshteinDistance(w1, w2);
-      const len = Math.max(w1.length, w2.length);
-      return (len - dist) / len;
+      if (p1 === p2) return 0.95;
+
+      const maxLen = Math.max(w1.length, w2.length);
+      const textDist = levenshteinDistance(w1, w2);
+      const phoneDist = levenshteinDistance(p1, p2);
+      
+      const textSim = maxLen > 0 ? (maxLen - textDist) / maxLen : 0;
+      const maxPhoneLen = Math.max(p1.length, p2.length);
+      const phoneSim = maxPhoneLen > 0 ? (maxPhoneLen - phoneDist) / maxPhoneLen : 0;
+      
+      return Math.max(textSim * 0.5, phoneSim * 1.0);
     }
 
     function levenshteinDistance(s1, s2) {
@@ -294,7 +586,8 @@
       for (let j = 0; j <= s1.length; j++) m[0][j] = j;
       for (let i = 1; i <= s2.length; i++) {
         for (let j = 1; j <= s1.length; j++) {
-          m[i][j] = s2[i-1] === s1[j-1] ? m[i-1][j-1] : Math.min(m[i-1][j-1] + 1, m[i][j-1] + 1, m[i-1][j] + 1);
+          m[i][j] = s2[i-1] === s1[j-1] ? m[i-1][j-1] : 
+            Math.min(m[i-1][j-1] + 1, m[i][j-1] + 1, m[i-1][j] + 1);
         }
       }
       return m[s2.length][s1.length];
@@ -303,6 +596,8 @@
     function loadRandomText() {
       const text = frenchTexts[Math.floor(Math.random() * frenchTexts.length)];
       currentText = text.text.split(/\s+/);
+      currentWordIndex = 0;
+      
       textContent.innerHTML = '';
       currentText.forEach((word, i) => {
         const span = document.createElement('span');
@@ -311,75 +606,109 @@
         span.textContent = word + ' ';
         textContent.appendChild(span);
       });
-      lastSuccessIndex = -1;
-      textContent.classList.remove('scrolling'); // Reset trạng thái cuộn
-      void textContent.offsetHeight; // Force reflow
+
+      if (currentText.length > 0) {
+        document.getElementById('word-0').classList.add('current');
+      }
+
+      textContent.classList.remove('scrolling');
+      void textContent.offsetHeight;
     }
 
     async function startExercise() {
       if (isRunning) return;
+
       isRunning = true;
       timeRemaining = 60;
-      stats = { correct: 0, total: 0 };
-      lastSuccessIndex = -1;
+      stats = { correct: 0, incorrect: 0, total: 0 };
+      currentWordIndex = 0;
+      processingQueue = [];
+      isProcessing = false;
 
       document.querySelectorAll('.word').forEach(w => {
-        w.classList.remove('correct', 'suggest');
+        w.classList.remove('correct', 'incorrect', 'current');
       });
-      
+
+      if (currentText.length > 0) {
+        document.getElementById('word-0').classList.add('current');
+      }
+
       updateStats();
       startBtn.disabled = true;
-      
-      // KÍCH HOẠT HIỆU ỨNG CUỘN
       textContent.classList.add('scrolling');
-      
       apiStatus.classList.add('active');
-      apiStatus.textContent = '🟢 Đang nghe...';
+      apiStatus.textContent = '🟢 Listening...';
       
       startTimer();
-      await startRecording();
-      showNotification('🎤 Bắt đầu! Chữ sẽ tự chạy...');
+      startContinuousRecording();
+      showNotification('🎤 Parlez en continu!');
     }
 
     function startTimer() {
       const startTime = Date.now();
+      const duration = 60000;
+      
       timerInterval = setInterval(() => {
-        const remaining = Math.max(0, 60000 - (Date.now() - startTime));
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, duration - elapsed);
         timeRemaining = Math.ceil(remaining / 1000);
-        timerDisplay.textContent = `${Math.floor(timeRemaining / 60)}:${(timeRemaining % 60).toString().padStart(2, '0')}`;
-        if (remaining <= 0) stopExercise();
+        
+        const m = Math.floor(timeRemaining / 60);
+        const s = timeRemaining % 60;
+        timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          stopExercise();
+        }
       }, 100);
     }
 
     function stopExercise() {
       isRunning = false;
       clearInterval(timerInterval);
-      clearInterval(sendDataInterval);
+      processingQueue = [];
+      
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
         mediaRecorder.stream.getTracks().forEach(track => track.stop());
       }
+      
       recordingIndicator.classList.remove('active');
       startBtn.disabled = false;
-      textContent.classList.remove('scrolling'); // Dừng cuộn
+      textContent.classList.remove('scrolling');
       apiStatus.classList.remove('active');
       apiStatus.textContent = '🤖 OpenAI Whisper Ready';
-      const acc = currentText.length > 0 ? Math.round((stats.correct / currentText.length) * 100) : 0;
-      showNotification(`✅ Hết giờ! Kết quả: ${acc}%`);
+      
+      const acc = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+      showNotification(`✅ Terminé! Précision: ${acc}%`);
     }
 
-    function resetExercise() { stopExercise(); loadRandomText(); timerDisplay.textContent = '1:00'; accuracyDisplay.textContent = '0%'; correctDisplay.textContent = '0'; totalDisplay.textContent = '0'; }
+    function resetExercise() {
+      stopExercise();
+      stats = { correct: 0, incorrect: 0, total: 0 };
+      timeRemaining = 60;
+      timerDisplay.textContent = '1:00';
+      updateStats();
+      loadRandomText();
+    }
+
     function updateStats() {
       const totalWords = currentText.length;
-      const accuracy = totalWords > 0 ? Math.round((stats.correct / totalWords) * 100) : 0;
+      const correctWords = stats.correct;
+      const accuracy = totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
+      
       accuracyDisplay.textContent = `${accuracy}%`;
-      correctDisplay.textContent = stats.correct;
-      totalDisplay.textContent = totalWords;
+      correctDisplay.textContent = correctWords;
+      incorrectDisplay.textContent = stats.incorrect;
+      totalDisplay.textContent = stats.total;
     }
 
     startBtn.addEventListener('click', startExercise);
     resetBtn.addEventListener('click', resetExercise);
+
     loadRandomText();
+    console.log('✅ Continuous Recording Mode Ready!');
   </script>
 </body>
 </html>
