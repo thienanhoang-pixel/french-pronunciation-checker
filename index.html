@@ -369,7 +369,7 @@
 
   <div class="recording-indicator" id="recordingIndicator">
     <div class="pulse"></div>
-    <span>Écoute...</span>
+    <span>Écoute en cours...</span>
   </div>
 
   <script>
@@ -397,14 +397,15 @@
     ];
 
     let currentText = [];
-    let currentWordIndex = 0;
     let isRunning = false;
     let timeRemaining = 60;
     let timerInterval = null;
-    let stats = { correct: 0, incorrect: 0, total: 0 };
+    let stats = { correct: 0, total: 0 };
+    
+    // VARIABLES CHO CONTINUOUS STREAMING
     let mediaRecorder = null;
     let audioChunks = [];
-    let recordingTimeout = null;
+    let recordingInterval = null;
 
     const textContent = document.getElementById('textContent');
     const startBtn = document.getElementById('startBtn');
@@ -432,8 +433,7 @@
 
     async function transcribeAudio(audioBlob) {
       try {
-        recordingIndicator.classList.add('active');
-
+        // Gửi ngầm, không block UI
         const formData = new FormData();
         formData.append('audio', audioBlob, 'audio.webm');
 
@@ -442,30 +442,21 @@
           body: formData
         });
 
-        recordingIndicator.classList.remove('active');
-
-        if (!response.ok) {
-          const error = await response.json();
-          console.error('❌ API Error:', error);
-          throw new Error(error.error || `HTTP ${response.status}`);
-        }
+        if (!response.ok) return null;
 
         const result = await response.json();
-        
-        if (result.error) {
-          throw new Error(result.error);
-        }
+        if (result.error) return null;
 
         console.log('✅ Transcription:', result.text);
         return result.text;
 
       } catch (error) {
-        recordingIndicator.classList.remove('active');
         console.error('❌ Transcription error:', error);
         return null;
       }
     }
 
+    // --- LOGIC GHI ÂM LIÊN TỤC MỚI ---
     async function startRecording() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -478,6 +469,7 @@
           } 
         });
 
+        // Setup Recorder
         mediaRecorder = new MediaRecorder(stream, {
           mimeType: 'audio/webm;codecs=opus',
           audioBitsPerSecond: 128000
@@ -485,40 +477,41 @@
         
         audioChunks = [];
 
+        // Thu thập dữ liệu liên tục
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             audioChunks.push(event.data);
           }
         };
 
-        mediaRecorder.onstop = async () => {
-          if (audioChunks.length === 0 || !isRunning) return;
-          
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          
-          if (audioBlob.size > 2000) {
-            const text = await transcribeAudio(audioBlob);
-            if (text && isRunning) {
-              checkPronunciation(text);
+        // Bắt đầu ghi âm với timeslice 1000ms
+        mediaRecorder.start(1000);
+        recordingIndicator.classList.add('active');
+
+        // GỬI DỮ LIỆU ĐI CHECK MỖI 2 GIÂY (Thay vì stop rồi start lại)
+        recordingInterval = setInterval(async () => {
+            if (!isRunning || mediaRecorder.state !== 'recording') return;
+
+            // Nếu có dữ liệu âm thanh
+            if (audioChunks.length > 0) {
+                // Tạo blob từ buffer hiện tại
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                
+                // RESET buffer NGAY LẬP TỨC để đón từ tiếp theo
+                // Việc này giúp tránh gửi trùng lặp và tách biệt các đoạn
+                audioChunks = [];
+
+                // Chỉ gửi nếu file > 4KB (tránh gửi khoảng lặng)
+                if (audioBlob.size > 4000) {
+                    // Gọi API (không await để tránh chặn luồng ghi âm)
+                    transcribeAudio(audioBlob).then(text => {
+                        if (text && isRunning) {
+                            checkPronunciation(text);
+                        }
+                    });
+                }
             }
-          }
-
-          audioChunks = [];
-          
-          if (isRunning && timeRemaining > 0 && currentWordIndex < currentText.length) {
-            setTimeout(() => { 
-              if (isRunning) startRecording(); 
-            }, 100);
-          }
-        };
-
-        mediaRecorder.start();
-        
-        recordingTimeout = setTimeout(() => {
-          if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-          }
-        }, 3000);
+        }, 2000); // 2 GIÂY - Nhanh hơn để bắt dấu phẩy
 
       } catch (error) {
         console.error('❌ Recording error:', error);
@@ -531,66 +524,62 @@
       if (!text) return '';
       return text.toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Loại bỏ dấu
-        .replace(/[^a-z0-9\s]/g, '') // Loại bỏ ký tự đặc biệt
-        .replace(/\s+/g, ' ') // Chuẩn hóa khoảng trắng
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, ' ')
         .trim();
     }
 
     function toPhonetic(word) {
       if (!word) return '';
       let p = word.toLowerCase();
-      
-      // Loại bỏ chữ cái cuối không phát âm (silent letters)
       p = p.replace(/[tdspxz]$/, '');
       p = p.replace(/ent$/, 'e').replace(/er$/, 'e').replace(/ez$/, 'e');
-      p = p.replace(/es$/, 'e'); // Thêm cho số nhiều
-      
-      // Nhóm nguyên âm phức tạp
+      p = p.replace(/es$/, 'e');
       p = p.replace(/eau/g, 'o').replace(/au/g, 'o');
       p = p.replace(/ai/g, 'e').replace(/ei/g, 'e');
       p = p.replace(/ou/g, 'u').replace(/eu/g, 'e');
       p = p.replace(/oi/g, 'wa').replace(/oin/g, 'wan');
       p = p.replace(/ain/g, 'an').replace(/ein/g, 'an').replace(/in/g, 'an');
       p = p.replace(/on/g, 'o').replace(/an/g, 'a').replace(/en/g, 'a');
-      p = p.replace(/un/g, 'an'); // Thêm cho "un"
-      
-      // Phụ âm đặc biệt
+      p = p.replace(/un/g, 'an');
       p = p.replace(/ch/g, 'sh').replace(/ph/g, 'f').replace(/qu/g, 'k');
       p = p.replace(/c([eiy])/g, 's$1').replace(/g([eiy])/g, 'j$1');
       p = p.replace(/gn/g, 'ni').replace(/ill/g, 'i').replace(/y/g, 'i');
-      
-      // Loại bỏ ký tự lặp lại
       p = p.replace(/(.)\1+/g, '$1');
-      
-      // Loại bỏ 'h' câm
       p = p.replace(/^h/, '').replace(/([^a-z])h/g, '$1');
-      
       return p;
     }
 
-    // Danh sách từ nhỏ có thể bỏ qua (giống Duolingo)
     const SKIPPABLE_WORDS = new Set([
       'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'a', 'au', 'aux',
       'et', 'ou', 'mais', 'par', 'pour', 'avec', 'sans', 'sous', 'sur', 'dans'
     ]);
 
-    // DUOLINGO-STYLE: Match tất cả từ trong transcription với các từ chưa đánh dấu
-    // Cho phép flexible order - không cần đọc đúng thứ tự
+    function isWordMarked(index) {
+        const el = document.getElementById(`word-${index}`);
+        return el && (el.classList.contains('correct') || el.classList.contains('incorrect'));
+    }
+
+    function markWordCorrect(index) {
+        const el = document.getElementById(`word-${index}`);
+        if (el && !el.classList.contains('correct')) {
+            el.classList.add('correct');
+            el.classList.remove('current');
+            stats.correct++;
+            updateStats();
+        }
+    }
+
     function checkPronunciation(spokenText) {
       if (!isRunning) return;
-      
-      // Bỏ qua nếu transcription rỗng
-      if (!spokenText || spokenText.trim().length === 0) {
-        return;
-      }
+      if (!spokenText || spokenText.trim().length === 0) return;
 
       const spokenWords = normalizeText(spokenText).split(/\s+/).filter(w => w.length > 0);
       if (spokenWords.length === 0) return;
       
-      console.log('🎯 Duolingo-style checking:', spokenWords.join(', '));
+      console.log('🎯 Checking chunk:', spokenWords.join(' '));
 
-      // Tìm từ chưa đánh dấu đầu tiên để làm điểm tham chiếu
       let firstUnmarkedIndex = -1;
       for (let i = 0; i < currentText.length; i++) {
         if (!isWordMarked(i)) {
@@ -599,36 +588,31 @@
         }
       }
       
-      const matchedIndices = new Set(); // Tránh match cùng một từ nhiều lần
-      // THRESHOLD RẤT THẤP: Chỉ cần đọc đúng phiên âm là được, không cần chính xác 100%
-      // Linh hoạt với accent khác nhau
-      const threshold = 0.25; // Rất thấp để dễ đạt - chỉ cần phiên âm tương tự
+      const matchedIndices = new Set();
+      const threshold = 0.25;
       
-      // Match từng từ trong transcription - AI đã nhận diện được thì đánh dấu xanh ngay
       spokenWords.forEach((spokenWord, wordOrder) => {
         let bestMatch = { index: -1, similarity: 0, phoneticMatch: false, distance: Infinity };
         
-        // Tìm từ khớp nhất trong TẤT CẢ các từ chưa được đánh dấu
-        // Ưu tiên các từ gần với vị trí hiện tại
-        for (let i = 0; i < currentText.length; i++) {
-          // Bỏ qua từ đã được đánh dấu
+        // Optimize: Chỉ check 15 từ tiếp theo để tránh match nhầm từ xa
+        const checkRange = 15;
+        const startIndex = firstUnmarkedIndex >= 0 ? Math.max(0, firstUnmarkedIndex - 2) : 0;
+        const endIndex = Math.min(currentText.length, startIndex + checkRange);
+
+        for (let i = startIndex; i < endIndex; i++) {
           if (isWordMarked(i) || matchedIndices.has(i)) continue;
           
           const expectedWord = normalizeText(currentText[i]);
           const sim = calculateSimilarity(spokenWord, expectedWord);
           
-          // Kiểm tra phonetic match (quan trọng hơn text match)
           const p1 = toPhonetic(spokenWord);
           const p2 = toPhonetic(expectedWord);
           const phoneticSim = p1.length > 0 && p2.length > 0 ? 
             (Math.max(p1.length, p2.length) - levenshteinDistance(p1, p2)) / Math.max(p1.length, p2.length) : 0;
-          const isPhoneticMatch = phoneticSim >= 0.6; // Nếu phonetic giống >= 60% thì coi như match
+          const isPhoneticMatch = phoneticSim >= 0.6;
           
-          // Tính khoảng cách từ vị trí đầu tiên chưa đánh dấu
           const distance = firstUnmarkedIndex >= 0 ? Math.abs(i - (firstUnmarkedIndex + wordOrder)) : i;
-          
-          // Ưu tiên: 1) phonetic match, 2) similarity cao, 3) vị trí gần
-          const score = isPhoneticMatch ? sim + 0.3 : sim; // Tăng score nếu phonetic match
+          const score = isPhoneticMatch ? sim + 0.3 : sim;
           
           if (score > bestMatch.similarity || 
               (score === bestMatch.similarity && isPhoneticMatch && !bestMatch.phoneticMatch) ||
@@ -637,52 +621,40 @@
           }
         }
 
-        // ĐÁNH DẤU XANH NGAY KHI AI NHẬN DIỆN ĐƯỢC
-        // Nếu phonetic match hoặc similarity >= threshold → đánh dấu đúng
         if (bestMatch.index >= 0 && (bestMatch.phoneticMatch || bestMatch.similarity >= threshold)) {
           markWordCorrect(bestMatch.index);
           matchedIndices.add(bestMatch.index);
-          const matchType = bestMatch.phoneticMatch ? 'phonetic' : 'similarity';
-          console.log(`✅ "${spokenWord}" → "${currentText[bestMatch.index]}" (${Math.round(bestMatch.similarity * 100)}% - ${matchType} match)`);
         } else if (bestMatch.index >= 0 && bestMatch.similarity >= 0.2) {
-          // Similarity >= 0.2: vẫn chấp nhận (rất linh hoạt với accent)
           markWordCorrect(bestMatch.index);
           matchedIndices.add(bestMatch.index);
-          console.log(`✅ "${spokenWord}" → "${currentText[bestMatch.index]}" (${Math.round(bestMatch.similarity * 100)}% - accepted)`);
         }
       });
 
-      // DUOLINGO LOGIC: Sau khi match xong, kiểm tra các từ nhỏ có thể bỏ qua
+      // Auto-complete skippable words
       for (let i = 0; i < currentText.length - 1; i++) {
         if (isWordMarked(i)) continue;
-        
         const word = normalizeText(currentText[i]);
-        // Nếu là từ nhỏ có thể bỏ qua
         if (SKIPPABLE_WORDS.has(word)) {
-          // Kiểm tra xem từ sau đã được đánh dấu chưa
           let foundNext = false;
           for (let j = i + 1; j < Math.min(i + 4, currentText.length); j++) {
-            if (isWordMarked(j) && document.getElementById(`word-${j}`).classList.contains('correct')) {
+            if (isWordMarked(j)) {
               foundNext = true;
               break;
             }
           }
-          // Nếu từ sau đã đúng, coi như từ nhỏ này cũng đúng (đã bỏ qua khi nói)
           if (foundNext) {
             markWordCorrect(i);
-            console.log(`✅ Auto-marked skippable word: "${currentText[i]}"`);
           }
         }
       }
 
-      // Cập nhật current word indicator - highlight từ chưa đánh dấu đầu tiên
+      // Update current indicator
       let foundCurrent = false;
       for (let i = 0; i < currentText.length; i++) {
         const el = document.getElementById(`word-${i}`);
         if (!isWordMarked(i)) {
           el.classList.add('current');
           foundCurrent = true;
-          // Xóa current từ các từ khác
           for (let j = 0; j < currentText.length; j++) {
             if (j !== i) {
               const otherEl = document.getElementById(`word-${j}`);
@@ -693,7 +665,6 @@
         }
       }
 
-      // Nếu tất cả từ đã được đánh dấu
       if (!foundCurrent) {
         stopExercise();
       }
@@ -705,99 +676,50 @@
       if (!w1 || !w2) return 0;
       if (w1 === w2) return 1;
       
-      // Danh sách từ đồng nghĩa/phát âm tương tự trong tiếng Pháp
       const special = {
-        'un': ['1', 'une', 'an', 'un'], 
-        'deux': ['2', 'de'], 
-        'trois': ['3', 'troi'],
-        'est': ['et', 'ai', 'es', 'e', 'eh'], 
-        'sont': ['son', 'sont'],
-        'jai': ['je', 'j', 'jai', 'jai'], 
-        'suis': ['sui', 'sui'],
-        'vous': ['vou', 'vu'], 
-        'nous': ['nou', 'nu'],
-        'cest': ['ces', 'ses', 'ce', 'se'],
-        'cetait': ['cetai', 'setait', 'cetait'],
-        'a': ['ah', 'ha', 'a'],
-        'la': ['lah', 'la'],
-        'le': ['leu', 'le'],
-        'les': ['le', 'les'],
-        'des': ['de', 'des'],
-        'du': ['du', 'de'],
-        'de': ['de', 'du'],
-        'par': ['par', 'pa'],
-        'pour': ['pour', 'pu'],
-        'avec': ['avec', 'avek'],
-        'dans': ['dan', 'dans'],
-        'sur': ['sur', 'su'],
-        'sous': ['sou', 'sous'],
-        'mais': ['me', 'mais'],
-        'ou': ['u', 'ou'],
-        'et': ['e', 'et'],
-        'il': ['il', 'i'],
-        'elle': ['el', 'elle'],
-        'ils': ['il', 'ils'],
-        'elles': ['el', 'elles']
+        'un': ['1', 'une', 'an', 'un'], 'deux': ['2', 'de'], 'trois': ['3', 'troi'],
+        'est': ['et', 'ai', 'es', 'e', 'eh'], 'sont': ['son', 'sont'],
+        'jai': ['je', 'j', 'jai', 'jai'], 'suis': ['sui', 'sui'],
+        'vous': ['vou', 'vu'], 'nous': ['nou', 'nu'],
+        'cest': ['ces', 'ses', 'ce', 'se'], 'cetait': ['cetai', 'setait', 'cetait'],
+        'a': ['ah', 'ha', 'a'], 'la': ['lah', 'la'], 'le': ['leu', 'le'],
+        'les': ['le', 'les'], 'des': ['de', 'des'], 'du': ['du', 'de'],
+        'de': ['de', 'du'], 'par': ['par', 'pa'], 'pour': ['pour', 'pu'],
+        'avec': ['avec', 'avek'], 'dans': ['dan', 'dans'], 'sur': ['sur', 'su'],
+        'sous': ['sou', 'sous'], 'mais': ['me', 'mais'], 'ou': ['u', 'ou'],
+        'et': ['e', 'et'], 'il': ['il', 'i'], 'elle': ['el', 'elle'],
+        'ils': ['il', 'ils'], 'elles': ['el', 'elles']
       };
 
-      // Kiểm tra từ đặc biệt
       if (special[w2]?.includes(w1) || special[w1]?.includes(w2)) return 0.95;
       
-      // Kiểm tra nếu một từ là phần của từ kia (cho phép linh hoạt hơn)
       if (w1.includes(w2) || w2.includes(w1)) {
         const shorter = w1.length < w2.length ? w1 : w2;
         const longer = w1.length >= w2.length ? w1 : w2;
-        if (longer.length <= shorter.length * 1.5) {
-          return 0.7; // Có thể là cùng từ nhưng có thêm ký tự
-        }
+        if (longer.length <= shorter.length * 1.5) return 0.7;
       }
 
       const p1 = toPhonetic(w1);
       const p2 = toPhonetic(w2);
-      
       if (p1 === p2) return 0.95;
 
-      const longer = w1.length > w2.length ? w1 : w2;
-      const textDist = levenshteinDistance(w1, w2);
-      const phoneDist = levenshteinDistance(p1, p2);
-      
-      // Tính similarity dựa trên độ dài từ
       const maxLen = Math.max(w1.length, w2.length);
+      const textDist = levenshteinDistance(w1, w2);
       const textSim = maxLen > 0 ? (maxLen - textDist) / maxLen : 0;
       
-      // Tính similarity dựa trên phonetic
       const maxPhoneLen = Math.max(p1.length, p2.length);
+      const phoneDist = levenshteinDistance(p1, p2);
       const phoneSim = maxPhoneLen > 0 ? (maxPhoneLen - phoneDist) / maxPhoneLen : 0;
       
-      // ƯU TIÊN PHONETIC HƠN TEXT - Chỉ cần đọc đúng phiên âm là được
-      // Linh hoạt với accent khác nhau
-      const combined = Math.max(textSim * 0.5, phoneSim * 1.0); // Phonetic quan trọng gấp đôi
+      const combined = Math.max(textSim * 0.5, phoneSim * 1.0); 
       
-      // Nếu phonetic giống nhau nhiều, tăng similarity đáng kể
-      if (phoneSim >= 0.7) {
-        return Math.min(combined * 1.2, 0.95); // Tăng mạnh nếu phonetic giống
-      }
-      
-      // Nếu cả hai từ đều ngắn (<= 3 ký tự), linh hoạt hơn
+      if (phoneSim >= 0.7) return Math.min(combined * 1.2, 0.95);
       if (maxLen <= 3) {
-        if (combined >= 0.5) {
-          return Math.min(combined * 1.15, 0.95); // Tăng similarity cho từ ngắn
-        }
-        // Ngay cả từ ngắn, nếu phonetic hơi giống thì vẫn chấp nhận
-        if (phoneSim >= 0.5) {
-          return Math.min(phoneSim * 1.1, 0.85);
-        }
+        if (combined >= 0.5) return Math.min(combined * 1.15, 0.95);
+        if (phoneSim >= 0.5) return Math.min(phoneSim * 1.1, 0.85);
       }
-      
-      // Nếu phonetic similarity >= 0.6, tăng thêm để dễ đạt threshold
-      if (phoneSim >= 0.6) {
-        return Math.min(combined * 1.1, 0.95);
-      }
-      
-      // Nếu text similarity >= 0.5, vẫn cho điểm
-      if (textSim >= 0.5) {
-        return Math.min(combined * 1.05, 0.9);
-      }
+      if (phoneSim >= 0.6) return Math.min(combined * 1.1, 0.95);
+      if (textSim >= 0.5) return Math.min(combined * 1.05, 0.9);
       
       return combined;
     }
@@ -806,7 +728,6 @@
       const m = [];
       for (let i = 0; i <= s2.length; i++) m[i] = [i];
       for (let j = 0; j <= s1.length; j++) m[0][j] = j;
-      
       for (let i = 1; i <= s2.length; i++) {
         for (let j = 1; j <= s1.length; j++) {
           m[i][j] = s2[i-1] === s1[j-1] ? m[i-1][j-1] : 
@@ -819,7 +740,6 @@
     function loadRandomText() {
       const text = frenchTexts[Math.floor(Math.random() * frenchTexts.length)];
       currentText = text.text.split(/\s+/);
-      currentWordIndex = 0;
       
       textContent.innerHTML = '';
       currentText.forEach((word, i) => {
@@ -843,9 +763,8 @@
 
       isRunning = true;
       timeRemaining = 60;
-      stats = { correct: 0 }; // Reset chỉ đếm từ đã đọc đúng
-      currentWordIndex = 0;
-
+      stats = { correct: 0, total: 0 };
+      
       document.querySelectorAll('.word').forEach(w => {
         w.classList.remove('correct', 'incorrect', 'current');
       });
@@ -858,11 +777,11 @@
       startBtn.disabled = true;
       textContent.classList.add('scrolling');
       apiStatus.classList.add('active');
-      apiStatus.textContent = '🟢 Listening...';
+      apiStatus.textContent = '🟢 Écoute active...';
       
       startTimer();
-      startRecording();
-      showNotification('🎤 Parlez clairement!');
+      await startRecording();
+      showNotification('🎤 Parlez maintenant!');
     }
 
     function startTimer() {
@@ -879,7 +798,6 @@
         timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')}`;
 
         if (remaining <= 0) {
-          clearInterval(timerInterval);
           stopExercise();
         }
       }, 100);
@@ -888,11 +806,7 @@
     function stopExercise() {
       isRunning = false;
       clearInterval(timerInterval);
-      
-      if (recordingTimeout) {
-        clearTimeout(recordingTimeout);
-        recordingTimeout = null;
-      }
+      clearInterval(recordingInterval); // Dừng loop gửi API
       
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
@@ -905,38 +819,37 @@
       apiStatus.classList.remove('active');
       apiStatus.textContent = '🤖 OpenAI Whisper Ready';
       
-      const acc = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+      const totalWords = currentText.length;
+      const acc = totalWords > 0 ? Math.round((stats.correct / totalWords) * 100) : 0;
       showNotification(`✅ Terminé! Précision: ${acc}%`);
     }
 
     function resetExercise() {
       stopExercise();
-      stats = { correct: 0, incorrect: 0, total: 0 };
-      timeRemaining = 60;
-      timerDisplay.textContent = '1:00';
-      updateStats();
       loadRandomText();
+      timerDisplay.textContent = '1:00';
+      accuracyDisplay.textContent = '0%';
+      correctDisplay.textContent = '0';
+      incorrectDisplay.textContent = '0';
+      totalDisplay.textContent = '0';
     }
 
     function updateStats() {
-      // Tính điểm: số từ đã đọc đúng / tổng số từ trong bài * 100%
       const totalWords = currentText.length;
       const correctWords = stats.correct;
-      const unreadWords = totalWords - correctWords;
-      
-      // Tính %: nếu không nói hết bài, chỉ tính % các từ đã đọc được
       const accuracy = totalWords > 0 ? Math.round((correctWords / totalWords) * 100) : 0;
       
       accuracyDisplay.textContent = `${accuracy}%`;
       correctDisplay.textContent = correctWords;
-      unreadDisplay.textContent = unreadWords;
+      incorrectDisplay.textContent = 0; 
+      totalDisplay.textContent = totalWords;
     }
 
     startBtn.addEventListener('click', startExercise);
     resetBtn.addEventListener('click', resetExercise);
 
     loadRandomText();
-    console.log('✅ French Pronunciation Checker ready!');
+    console.log('✅ Continuous Stream Mode Activated!');
   </script>
 </body>
 </html>
