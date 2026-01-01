@@ -2,13 +2,12 @@
   "name": "french-pronunciation-checker",
   "version": "1.0.0",
   "type": "module",
-  "description": "French pronunciation checker with OpenAI Whisper",
+  "description": "French pronunciation checker with IBM Watson",
   "dependencies": {
     "formidable": "^3.5.1",
-    "openai": "^4.0.0"
+    "ibm-watson": "^8.0.0"
   },
   "engines": {
     "node": ">=18.x"
   }
 }
-
