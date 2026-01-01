@@ -6,14 +6,14 @@
       "use": "@vercel/static"
     },
     {
-      "src": "api/**/*.js",
+      "src": "api/transcribe.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/api/transcribe",
+      "dest": "/api/transcribe.js"
     },
     {
       "src": "/(.*)",
