@@ -413,6 +413,11 @@
     let mediaRecorder = null;
     let audioChunks = [];
     let recordingTimeout = null;
+    // ===== AUDIO VOLUME CHECK (QUAN TRỌNG) =====
+    let audioContext = null;
+    let analyser = null;
+    let sourceNode = null;
+
 
     const elements = {
       textContent: document.getElementById('textContent'),
@@ -495,71 +500,86 @@
       }
     }
 
-    async function startRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: { 
-            channelCount: 1, 
-            sampleRate: 48000,
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          } 
-        });
-
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'audio/webm;codecs=opus',
-          audioBitsPerSecond: 128000
-        });
-        
-        audioChunks = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunks.push(event.data);
-          }
-        };
-
-        mediaRecorder.onstop = async () => {
-          if (audioChunks.length === 0 || !isRunning) return;
-          
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          
-          if (audioBlob.size > 2000) {
-            const text = await transcribeAudio(audioBlob);
-            if (text && isRunning) {
-              checkPronunciation(text);
-            }
-          }
-
-          audioChunks = [];
-          
-          // Tiếp tục ghi nếu còn từ chưa đọc
-          if (isRunning && timeRemaining > 0) {
-            const hasUnread = Array.from({ length: currentText.length }, (_, i) => i)
-              .some(i => !isWordMarked(i));
-            if (hasUnread) {
-              setTimeout(() => { 
-                if (isRunning) startRecording(); 
-              }, 200);
-            }
-          }
-        };
-
-        mediaRecorder.start();
-        
-        recordingTimeout = setTimeout(() => {
-          if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-          }
-        }, 4000); // 4 giây
-
-      } catch (error) {
-        addDebugLog(`❌ Lỗi mic: ${error.message}`, 'error');
-        showNotification('❌ Lỗi microphone', true);
-        stopExercise();
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount: 1,
+        sampleRate: 48000,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
       }
-    }
+    });
+
+    // ====== SETUP AUDIO VOLUME CHECK ======
+    audioContext = new AudioContext();
+    sourceNode = audioContext.createMediaStreamSource(stream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    sourceNode.connect(analyser);
+
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'audio/webm;codecs=opus',
+      audioBitsPerSecond: 128000
+    });
+
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = async () => {
+      if (!isRunning || audioChunks.length === 0) return;
+
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      audioChunks = [];
+
+      const volume = getAverageVolume();
+      addDebugLog(`🔊 RMS volume: ${volume.toFixed(4)}`);
+
+      // ❌ THỞ / IM LẶNG → BỎ QUA
+      if (volume < 0.03) {
+        addDebugLog('🚫 Âm lượng quá nhỏ → KHÔNG gửi Whisper', 'error');
+      } else if (audioBlob.size < 3000) {
+        addDebugLog('🚫 Audio quá ngắn → bỏ qua', 'error');
+      } else {
+        const text = await transcribeAudio(audioBlob);
+        if (text && isRunning) {
+          checkPronunciation(text);
+        }
+      }
+
+      // Ghi tiếp nếu còn từ chưa đọc
+      if (isRunning && timeRemaining > 0) {
+        const hasUnread = currentText.some((_, i) => !isWordMarked(i));
+        if (hasUnread) {
+          setTimeout(() => {
+            if (isRunning) startRecording();
+          }, 200);
+        }
+      }
+    };
+
+    mediaRecorder.start();
+
+    // ⏱️ CẮT AUDIO NGẮN → TRÁNH WHISPER ĐOÁN BỪA
+    recordingTimeout = setTimeout(() => {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+    }, 1800);
+
+  } catch (error) {
+    addDebugLog(`❌ Lỗi mic: ${error.message}`, 'error');
+    showNotification('❌ Lỗi microphone', true);
+    stopExercise();
+  }
+}
+
 
     // ========================================
     // THUẬT TOÁN SO SÁNH NGHIÊM NGẶT
@@ -574,6 +594,21 @@
         .replace(/\s+/g, ' ')
         .trim();
     }
+    function getAverageVolume() {
+  if (!analyser) return 0;
+
+  const buffer = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(buffer);
+
+  let sum = 0;
+  for (let i = 0; i < buffer.length; i++) {
+    const value = (buffer[i] - 128) / 128;
+    sum += value * value;
+  }
+
+  return Math.sqrt(sum / buffer.length);
+}
+
 
     function toPhonetic(word) {
       if (!word) return '';
