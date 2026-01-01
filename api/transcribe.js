@@ -10,7 +10,6 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -24,58 +23,50 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Kiểm tra API key
     if (!process.env.OPENAI_API_KEY) {
       console.error('❌ OPENAI_API_KEY not set');
-      return res.status(500).json({ error: 'API key not configured. Please set OPENAI_API_KEY in Vercel environment variables.' });
+      return res.status(500).json({ 
+        error: 'API key not configured. Set OPENAI_API_KEY in Vercel.' 
+      });
     }
 
-    console.log('📝 Parsing form data...');
+    console.log('📝 Parsing audio...');
 
-    // Parse form data
     const form = formidable({ 
       multiples: false,
-      maxFileSize: 25 * 1024 * 1024, // 25MB
+      maxFileSize: 25 * 1024 * 1024,
       keepExtensions: true,
     });
     
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) {
-          console.error('Form parse error:', err);
-          reject(err);
-        } else {
-          resolve([fields, files]);
-        }
+        if (err) reject(err);
+        else resolve([fields, files]);
       });
     });
 
-    // Lấy file audio
     const audioFile = Array.isArray(files.audio) ? files.audio[0] : files.audio;
     
     if (!audioFile || !audioFile.filepath) {
-      console.error('❌ No audio file in request');
-      return res.status(400).json({ error: 'No audio file provided' });
+      return res.status(400).json({ error: 'No audio file' });
     }
 
-    console.log('🎤 Audio file:', audioFile.originalFilename, `(${audioFile.size} bytes)`);
+    console.log(`🎤 Audio: ${audioFile.size} bytes`);
 
-    // Đọc file audio
     const audioBuffer = fs.readFileSync(audioFile.filepath);
     
-    // Tạo FormData cho OpenAI
     const formData = new FormData();
     formData.append('file', audioBuffer, {
       filename: 'audio.webm',
-      contentType: audioFile.mimetype || 'audio/webm'
+      contentType: 'audio/webm'
     });
     formData.append('model', 'whisper-1');
-    formData.append('language', 'fr');
-    formData.append('response_format', 'json');
+    formData.append('language', 'fr'); // ← QUAN TRỌNG: chỉ định tiếng Pháp
+    formData.append('response_format', 'verbose_json'); // ← Lấy thêm confidence
+    formData.append('temperature', '0'); // ← Giảm hallucination
 
-    console.log('🚀 Calling OpenAI Whisper API...');
+    console.log('🚀 Calling Whisper API...');
 
-    // Gọi OpenAI API
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
       method: 'POST',
       headers: {
@@ -85,19 +76,18 @@ export default async function handler(req, res) {
       body: formData
     });
 
-    // Xóa file tạm
+    // Xóa file temp
     try {
       fs.unlinkSync(audioFile.filepath);
     } catch (e) {
-      console.error('⚠️ Error deleting temp file:', e);
+      console.error('⚠️ Cannot delete temp file');
     }
 
-    // Xử lý response
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ OpenAI API error:', response.status, errorText);
+      console.error('❌ OpenAI error:', response.status, errorText);
       
-      let errorMessage = `OpenAI API error: ${response.status}`;
+      let errorMessage = `OpenAI error: ${response.status}`;
       try {
         const errorJson = JSON.parse(errorText);
         errorMessage = errorJson.error?.message || errorMessage;
@@ -113,13 +103,14 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      text: result.text.trim()
+      text: result.text.trim(),
+      language: result.language // để check có phải tiếng Pháp không
     });
 
   } catch (error) {
-    console.error('💥 Transcription error:', error);
+    console.error('💥 Error:', error);
     return res.status(500).json({
-      error: error.message || 'Internal server error'
+      error: error.message || 'Internal error'
     });
   }
 }
