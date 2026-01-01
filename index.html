@@ -11,20 +11,20 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      /* Hình nền bảng tuần hoàn Neon */
+      /* Nếu bạn muốn dùng ảnh Dragon Ball thì đổi tên file ảnh đó thành bg.jpg */
       background: url('bg.jpg') no-repeat center center fixed; 
       background-size: cover;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      color: #fff; /* Chữ mặc định màu trắng cho nổi */
+      color: #fff;
     }
 
-    /* Lớp phủ tối để làm nổi chữ hơn trên nền ảnh rực rỡ */
+    /* Lớp phủ tối để làm nổi chữ */
     .overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); /* Tối đi 50% */
+      background: rgba(0, 0, 0, 0.6); 
       z-index: 0;
     }
 
@@ -34,50 +34,49 @@
       display: flex;
       flex-direction: column;
       padding: 24px;
-      overflow: auto;
       position: relative;
-      z-index: 1; /* Nổi lên trên lớp phủ */
+      z-index: 1;
     }
 
-    .header { text-align: center; margin-bottom: 24px; }
+    .header { text-align: center; margin-bottom: 20px; }
 
-    /* Hiệu ứng chữ Neon phát sáng */
+    /* Hiệu ứng chữ Neon */
     .header h1 {
       color: #fff;
-      font-size: 42px; /* To hơn chút */
+      font-size: 38px;
       font-weight: 800;
       text-transform: uppercase;
       text-shadow: 
         0 0 5px #fff,
         0 0 10px #fff,
         0 0 20px #ff00de,
-        0 0 30px #ff00de,
         0 0 40px #ff00de;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
 
     .slogan {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.7);
       display: inline-block;
       padding: 8px 20px;
       border-radius: 50px;
       border: 1px solid #00ffea;
       box-shadow: 0 0 10px #00ffea;
       color: #00ffea;
+      margin-bottom: 10px;
     }
 
     .api-status {
-      margin-top: 15px;
+      margin-top: 5px;
       background: rgba(0, 0, 0, 0.8);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
       display: inline-block;
       color: #aaa;
     }
-    .api-status.active { color: #48bb78; font-weight: bold; border: 1px solid #48bb78; }
+    .api-status.active { color: #48bb78; border: 1px solid #48bb78; }
 
     .main-content {
       flex: 1;
@@ -86,31 +85,32 @@
       max-width: 800px;
       width: 100%;
       margin: 0 auto;
-      min-height: 0;
+      min-height: 0; /* Quan trọng để flex không bị tràn */
     }
 
     .text-display-wrapper {
       flex: 1;
-      background: rgba(255, 255, 255, 0.95); /* Màu trắng đục */
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
       overflow: hidden;
       margin-bottom: 20px;
       position: relative;
+      border: 2px solid rgba(255,255,255,0.2);
     }
 
     .text-display {
       height: 100%;
       overflow: hidden;
       position: relative;
-      padding: 32px;
+      padding: 30px;
       display: flex;
-      align-items: flex-end;
+      align-items: flex-end; /* Chữ chạy từ dưới lên */
     }
 
     .text-content {
       width: 100%;
-      padding: 0;
+      padding-bottom: 50px; /* Khoảng trống để dễ nhìn */
       transform: translateY(100%);
       transition: none;
     }
@@ -118,112 +118,97 @@
 
     .word {
       display: inline;
-      font-size: 26px;
+      font-size: 24px;
       line-height: 1.8;
       padding: 2px 4px;
       border-radius: 4px;
-      color: #333; /* Chữ trong khung bài đọc màu đen */
+      color: #333;
     }
     .word.correct { background-color: #48bb78; color: #fff; font-weight: 600; }
     .word.current { background-color: #ffd700; color: #000; font-weight: 700; transform: scale(1.1); display: inline-block;}
 
     .controls {
-      display: flex; gap: 16px; align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.8); /* Nền đen mờ cho cụm nút */
-      padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.2);
-      margin-bottom: 16px; flex-wrap: wrap;
+      display: flex; gap: 12px; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 15px; flex-wrap: wrap;
     }
 
     .btn {
-      padding: 14px 28px; font-size: 16px; font-weight: 600; border: none; border-radius: 12px;
-      cursor: pointer; transition: 0.2s; min-width: 120px;
+      padding: 12px 24px; font-size: 16px; font-weight: 600; border: none; border-radius: 10px;
+      cursor: pointer; transition: 0.2s; min-width: 110px;
     }
-    .btn-start { background: #00ffea; color: #000; box-shadow: 0 0 15px #00ffea; }
+    .btn-start { background: #00ffea; color: #000; box-shadow: 0 0 10px #00ffea; }
     .btn-start:hover { transform: scale(1.05); background: #fff; }
     
-    .btn-reset { background: #ff00de; color: #fff; box-shadow: 0 0 15px #ff00de; }
+    .btn-reset { background: #ff00de; color: #fff; box-shadow: 0 0 10px #ff00de; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
     .timer {
-      font-size: 24px; font-weight: 700; color: #fff; min-width: 80px; text-align: center;
+      font-size: 24px; font-weight: 700; color: #fff; min-width: 70px; text-align: center;
       text-shadow: 0 0 10px cyan;
     }
 
     .stats {
       background: rgba(0, 0, 0, 0.8);
-      padding: 15px; border-radius: 16px;
+      padding: 12px; border-radius: 16px;
       display: flex; justify-content: space-around;
       border: 1px solid rgba(255,255,255,0.2);
     }
-    .stat-label { font-size: 14px; color: #bbb; margin-bottom: 4px; }
-    .stat-value { font-size: 24px; font-weight: 700; color: #fff; }
+    .stat-label { font-size: 12px; color: #bbb; margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: 700; color: #fff; }
     .stat-value.correct { color: #48bb78; text-shadow: 0 0 10px #48bb78; }
 
-    /* --- POPUP KẾT QUẢ --- */
+    /* POPUP KẾT QUẢ */
     .result-modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.9);
       z-index: 2000;
       display: none;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
       backdrop-filter: blur(5px);
     }
     .result-modal.active { display: flex; animation: fadeIn 0.3s; }
 
     .result-box {
-      background: #fff;
-      color: #333;
-      padding: 40px;
-      border-radius: 24px;
-      text-align: center;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 0 50px rgba(0, 255, 234, 0.5);
+      background: #fff; color: #333; padding: 30px; border-radius: 20px;
+      text-align: center; max-width: 450px; width: 90%;
+      box-shadow: 0 0 40px rgba(0, 255, 234, 0.4);
       border: 4px solid #00ffea;
     }
-    .result-title { font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #333; }
-    .result-score { font-size: 60px; font-weight: 900; color: #333; margin: 20px 0; }
-    .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 30px; }
+    .result-score { font-size: 50px; font-weight: 900; margin: 15px 0; }
+    .result-msg { font-size: 20px; font-weight: 600; line-height: 1.4; margin-bottom: 25px; }
     
-    /* Style cho Người Pháp */
-    .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 50px #48bb78; }
+    .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 40px #48bb78; }
     .french-mode .result-score { color: #48bb78; }
     
-    /* Style cho Con Gà */
-    .chicken-mode .result-box { border-color: #ff4757; box-shadow: 0 0 50px #ff4757; }
+    .chicken-mode .result-box { border-color: #ff4757; box-shadow: 0 0 40px #ff4757; }
     .chicken-mode .result-score { color: #ff4757; }
 
-    .btn-close {
-      background: #333; color: white; padding: 12px 30px; border-radius: 50px;
-      font-size: 18px; cursor: pointer; border: none;
-    }
+    .btn-close { background: #333; color: white; padding: 10px 25px; border-radius: 50px; font-size: 16px; cursor: pointer; border: none; }
 
-    /* Hiệu ứng ghi âm */
+    /* Recording Dot */
     .recording-indicator {
       position: fixed; bottom: 20px; right: 20px;
       background: #ff4757; color: white; padding: 10px 20px;
       border-radius: 50px; display: none; align-items: center; gap: 10px;
-      box-shadow: 0 0 20px #ff4757;
-      z-index: 1001; font-weight: bold;
+      box-shadow: 0 0 20px #ff4757; z-index: 1001; font-weight: bold;
     }
     .recording-indicator.active { display: flex; }
-    .pulse { width: 12px; height: 12px; background: #fff; border-radius: 50%; animation: pulse 1s infinite; }
+    .pulse { width: 10px; height: 10px; background: #fff; border-radius: 50%; animation: pulse 1s infinite; }
     @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } 100% { opacity: 1; transform: scale(1); } }
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
   </style>
 </head>
 <body>
-  <div class="overlay"></div> <div class="app-container">
+  <div class="overlay"></div>
+  
+  <div class="app-container">
     <header class="header">
       <h1>🇫🇷 Avec Ann 🇫🇷</h1>
-      
-      <div class="slogan">
-        🤵 Bạn là người Pháp hay là con gàe? 🐔
-      </div>
-      
+      <div class="slogan">🤵 Bạn là người Pháp hay là con gàe? 🐔</div>
       <br>
-      <div class="api-status" id="apiStatus">🤖 IBM Watson Ready</div>
+      <div class="api-status" id="apiStatus">🤖 Ready</div>
     </header>
 
     <main class="main-content">
@@ -235,9 +220,7 @@
 
       <div class="controls">
         <button class="btn btn-start" id="startBtn">Démarrer (Bắt đầu)</button>
-        <div class="timer">
-          <span id="timerDisplay">1:00</span>
-        </div>
+        <div class="timer"><span id="timerDisplay">1:00</span></div>
         <button class="btn btn-reset" id="resetBtn">Bài khác ></button>
       </div>
 
@@ -251,7 +234,7 @@
           <div class="stat-value correct" id="correctDisplay">0</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">Chưa đọc</div>
+          <div class="stat-label">Sót</div>
           <div class="stat-value" id="unreadDisplay">0</div>
         </div>
       </div>
@@ -259,13 +242,12 @@
   </div>
 
   <div class="recording-indicator" id="recordingIndicator">
-    <div class="pulse"></div>
-    <span>Đang nghe...</span>
+    <div class="pulse"></div><span>Đang nghe...</span>
   </div>
 
   <div class="result-modal" id="resultModal">
     <div class="result-box">
-      <div class="result-title">KẾT QUẢ</div>
+      <div class="result-title" style="font-weight:bold; font-size: 24px;">KẾT QUẢ</div>
       <div class="result-score" id="modalScore">0%</div>
       <div class="result-msg" id="modalMsg">...</div>
       <button class="btn-close" onclick="closeModal()">Đóng</button>
@@ -273,19 +255,11 @@
   </div>
 
   <script>
+    // --- PHẦN LOGIC JAVASCRIPT ---
     const frenchTexts = [
-      {
-        level: "A1",
-        text: "Bonjour je m'appelle Marie. J'habite à Paris. J'aime beaucoup le chocolat et les croissants."
-      },
-      {
-        level: "A2",
-        text: "Apprendre une nouvelle langue est comme ouvrir une fenêtre sur un monde inconnu. C'est une aventure passionnante."
-      },
-      {
-        level: "B1",
-        text: "Chaque jour est une opportunité pour progresser. Il ne faut pas avoir peur de faire des erreurs car c'est en tombant qu'on apprend à marcher."
-      }
+      { text: "Bonjour je m'appelle Marie. J'habite à Paris. J'aime beaucoup le chocolat et les croissants." },
+      { text: "Apprendre une nouvelle langue est comme ouvrir une fenêtre sur un monde inconnu." },
+      { text: "Chaque jour est une opportunité pour progresser. Il ne faut pas avoir peur de faire des erreurs." }
     ];
 
     let currentText = [];
@@ -293,7 +267,8 @@
     let timeRemaining = 60;
     let timerInterval = null;
     let stats = { correct: 0 };
-
+    
+    // UI Elements
     const textContent = document.getElementById('textContent');
     const startBtn = document.getElementById('startBtn');
     const resetBtn = document.getElementById('resetBtn');
@@ -302,1038 +277,181 @@
     const correctDisplay = document.getElementById('correctDisplay');
     const unreadDisplay = document.getElementById('unreadDisplay');
     const recordingIndicator = document.getElementById('recordingIndicator');
-    const apiStatus = document.getElementById('apiStatus');
-    
-    // Elements cho Modal
     const resultModal = document.getElementById('resultModal');
     const modalScore = document.getElementById('modalScore');
     const modalMsg = document.getElementById('modalMsg');
 
-    // ====== PHẦN XỬ LÝ ÂM THANH ======
+    // Audio Vars
     let stream = null;
     let mediaRecorder = null;
     let audioChunks = [];
     let recordingTimeout = null;
-    let audioContext = null;
-    let analyser = null;
-    let sourceNode = null;
-    let rafId = null;
-    let maxRms = 0;
 
-    function closeModal() {
-      resultModal.classList.remove('active');
-    }
+    function closeModal() { resultModal.classList.remove('active'); }
 
     function normalizeText(text) {
-      if (!text) return '';
-      return text.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, ' ').trim();
+      return text ? text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim() : '';
     }
-
-    function toPhonetic(word) {
-      if (!word) return '';
-      let p = word.toLowerCase();
-      // Quy tắc phát âm tiếng Pháp cơ bản để so sánh tốt hơn
-      p = p.replace(/[tdspxz]$/, '');
-      p = p.replace(/ent$/, 'e').replace(/er$/, 'e').replace(/ez$/, 'e').replace(/es$/, 'e');
-      p = p.replace(/eau/g, 'o').replace(/au/g, 'o');
-      p = p.replace(/ou/g, 'u');
-      p = p.replace(/ch/g, 'sh').replace(/ph/g, 'f').replace(/qu/g, 'k');
-      return p;
-    }
-
-    function levenshteinDistance(s1, s2) {
-      const m = [];
-      for (let i = 0; i <= s2.length; i++) m[i] = [i];
-      for (let j = 0; j <= s1.length; j++) m[0][j] = j;
-      for (let i = 1; i <= s2.length; i++) {
-        for (let j = 1; j <= s1.length; j++) {
-          m[i][j] = s2[i-1] === s1[j-1]
-            ? m[i-1][j-1]
-            : Math.min(m[i-1][j-1] + 1, m[i][j-1] + 1, m[i-1][j] + 1);
+    
+    // So sánh từ (Levenshtein đơn giản hóa)
+    function calculateSimilarity(s1, s2) {
+      if(!s1 || !s2) return 0;
+      if(s1 === s2) return 1;
+      // Logic so sánh đơn giản để code gọn
+      let longer = s1.length > s2.length ? s1 : s2;
+      let shorter = s1.length > s2.length ? s2 : s1;
+      if (longer.length === 0) return 1.0;
+      // Edit distance implementation
+      let costs = new Array();
+      for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+          if (i == 0) costs[j] = j;
+          else {
+            if (j > 0) {
+              let newValue = costs[j - 1];
+              if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+              costs[j - 1] = lastValue;
+              lastValue = newValue;
+            }
+          }
         }
+        if (i > 0) costs[s2.length] = lastValue;
       }
-      return m[s2.length][s1.length];
-    }
-
-    function calculateSimilarity(w1, w2) {
-      if (!w1 || !w2) return 0;
-      if (w1 === w2) return 1;
-      const p1 = toPhonetic(w1);
-      const p2 = toPhonetic(w2);
-      const maxLen = Math.max(w1.length, w2.length);
-      const maxPhoneLen = Math.max(p1.length, p2.length);
-      const textDist = levenshteinDistance(w1, w2);
-      const phoneDist = levenshteinDistance(p1, p2);
-      const textSim = maxLen > 0 ? (maxLen - textDist) / maxLen : 0;
-      const phoneSim = maxPhoneLen > 0 ? (maxPhoneLen - phoneDist) / maxPhoneLen : 0;
-      return textSim * 0.5 + phoneSim * 0.5;
+      return (longer.length - costs[s2.length]) / longer.length;
     }
 
     function markWordCorrect(i) {
       const el = document.getElementById(`word-${i}`);
-      if (!el || el.classList.contains('correct')) return false;
+      if (!el || el.classList.contains('correct')) return;
       el.classList.remove('current');
       el.classList.add('correct');
       stats.correct++;
-      return true;
-    }
-
-    function getFirstUnmarkedIndex() {
-      for (let i = 0; i < currentText.length; i++) {
-        const el = document.getElementById(`word-${i}`);
-        if (el && !el.classList.contains('correct')) return i;
-      }
-      return -1;
-    }
-
-    function updateCurrentIndicator() {
-      const idx = getFirstUnmarkedIndex();
-      document.querySelectorAll('.word').forEach(el => el.classList.remove('current'));
-      if (idx !== -1) {
-        const el = document.getElementById(`word-${idx}`);
-        if(el) el.classList.add('current');
-      }
     }
 
     function updateStats() {
       const total = currentText.length;
-      const correct = stats.correct;
-      const unread = Math.max(0, total - correct);
-      const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+      const acc = total > 0 ? Math.round((stats.correct / total) * 100) : 0;
       accuracyDisplay.textContent = `${acc}%`;
-      correctDisplay.textContent = correct;
-      unreadDisplay.textContent = unread;
+      correctDisplay.textContent = stats.correct;
+      unreadDisplay.textContent = Math.max(0, total - stats.correct);
       return acc;
     }
 
-    async function transcribeAudio(audioBlob) {
-      try {
-        recordingIndicator.classList.add('active');
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.webm');
-        
-        // Gọi API của bạn (đã sửa thành IBM trong api/transcribe.js)
-        const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
-        
-        if (!response.ok) throw new Error('Network response was not ok');
-        const result = await response.json();
-        return (result.text || '').trim();
-      } catch (e) {
-        console.error("Transcribe error:", e);
-        return null;
-      } finally {
-        recordingIndicator.classList.remove('active');
-      }
-    }
-
-    // --- VAD (Voice Activity Detection) Đơn giản ---
-    function getRmsNow() {
-      if (!analyser) return 0;
-      const buffer = new Uint8Array(analyser.fftSize);
-      analyser.getByteTimeDomainData(buffer);
-      let sum = 0;
-      for (let i = 0; i < buffer.length; i++) {
-        const v = (buffer[i] - 128) / 128;
-        sum += v * v;
-      }
-      return Math.sqrt(sum / buffer.length);
-    }
-    function startVAD() {
-      maxRms = 0;
-      const loop = () => {
-        const rms = getRmsNow();
-        if (rms > maxRms) maxRms = rms;
-        rafId = requestAnimationFrame(loop);
-      };
-      loop();
-    }
-    function stopVAD() {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-
-    async function ensureMicReady() {
-      if (stream) return;
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
-      });
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      sourceNode = audioContext.createMediaStreamSource(stream);
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      sourceNode.connect(analyser);
-    }
-
-    async function recordOneChunk() {
+    async function recordLoop() {
       if (!isRunning) return;
-      await ensureMicReady();
-      audioChunks = [];
       
-      const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
-        ? { mimeType: 'audio/webm;codecs=opus' } : {};
+      // Khởi tạo Mic
+      if (!stream) stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
+      const options = MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : {};
       mediaRecorder = new MediaRecorder(stream, options);
+      audioChunks = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunks.push(event.data);
-      };
-
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
       mediaRecorder.onstop = async () => {
-        stopVAD();
-        clearTimeout(recordingTimeout);
-        if (!isRunning) return; // Nếu đã dừng game thì thôi
-
-        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        if (!isRunning || audioChunks.length === 0) return;
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
         
-        // Chỉ gửi nếu có tiếng nói (RMS > ngưỡng)
-        if (maxRms > 0.03 && blob.size > 3000) {
-          const text = await transcribeAudio(blob);
-          if (text) checkPronunciation(text);
-        }
+        // Gửi lên API (Lưu ý: Netlify function path có thể khác Vercel)
+        recordingIndicator.classList.add('active');
+        try {
+            const formData = new FormData();
+            formData.append('audio', blob, 'audio.webm');
+            
+            // QUAN TRỌNG: Đường dẫn API trên Netlify
+            // Nếu bạn deploy từ code cũ Vercel, API có thể bị lỗi 404 ở đây
+            const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+            if(res.ok) {
+                const data = await res.json();
+                if(data.text) checkText(data.text);
+            }
+        } catch(e) { console.error(e); }
+        recordingIndicator.classList.remove('active');
 
-        // Loop ghi âm tiếp nếu còn thời gian và chưa hết bài
-        if (isRunning && timeRemaining > 0 && getFirstUnmarkedIndex() !== -1) {
-          setTimeout(() => { if (isRunning) recordOneChunk(); }, 100);
-        } else if (getFirstUnmarkedIndex() === -1) {
-          stopExercise(true); // Hoàn thành
-        }
+        if (isRunning && timeRemaining > 0) setTimeout(recordLoop, 100);
       };
 
-      startVAD();
       mediaRecorder.start();
-      // Ghi âm mỗi đoạn 2.5s
-      recordingTimeout = setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-      }, 2500);
+      setTimeout(() => { if(mediaRecorder.state==='recording') mediaRecorder.stop(); }, 2500);
     }
 
-    function checkPronunciation(spokenText) {
-      if (!isRunning) return;
-      const words = normalizeText(spokenText).split(/\s+/).filter(w => w.length > 0);
-      if (words.length > 8) return; // Bỏ qua nếu quá dài (nhiễu)
-
-      let idx = getFirstUnmarkedIndex();
-      if (idx === -1) return;
-
-      const THRESHOLD = 0.75; // Độ khó (càng cao càng khó)
-      let advanced = 0;
-
-      for (const w of words) {
-        if (advanced >= 2) break; // Chỉ check tối đa 2 từ tiếp theo
-        idx = getFirstUnmarkedIndex();
-        if (idx === -1) break;
-
-        const expected = normalizeText(currentText[idx]);
-        const sim = calculateSimilarity(w, expected);
-
-        if (sim >= THRESHOLD) {
-          markWordCorrect(idx);
-          advanced++;
-        } else {
-          break; // Sai từ hiện tại thì dừng
-        }
+    function checkText(spoken) {
+      const spokenWords = normalizeText(spoken).split(' ');
+      let currentIndex = -1;
+      // Tìm từ chưa đọc
+      for(let i=0; i<currentText.length; i++) {
+          if(!document.getElementById(`word-${i}`).classList.contains('correct')) {
+              currentIndex = i; break;
+          }
       }
-      updateCurrentIndicator();
-      updateStats();
+      if(currentIndex === -1) return stopGame(); // Xong hết rồi
+
+      // So khớp
+      for(let w of spokenWords) {
+          if(currentIndex >= currentText.length) break;
+          const target = normalizeText(currentText[currentIndex]);
+          if(calculateSimilarity(w, target) > 0.7) {
+              markWordCorrect(currentIndex);
+              currentIndex++;
+          }
+      }
+      
+      // Update Current Highlight
+      document.querySelectorAll('.word').forEach(e => e.classList.remove('current'));
+      if(currentIndex < currentText.length) {
+          document.getElementById(`word-${currentIndex}`).classList.add('current');
+      }
+      
+      if(updateStats() === 100) stopGame();
     }
 
-    function loadRandomText() {
-      const pick = frenchTexts[Math.floor(Math.random() * frenchTexts.length)];
-      currentText = pick.text.split(/\s+/);
-
-      textContent.innerHTML = '';
-      currentText.forEach((word, i) => {
-        const span = document.createElement('span');
-        span.className = 'word';
-        span.id = `word-${i}`;
-        span.textContent = word + ' ';
-        textContent.appendChild(span);
-      });
-
-      stats = { correct: 0 };
-      updateStats();
-      textContent.classList.remove('scrolling');
-      void textContent.offsetHeight;
-      updateCurrentIndicator();
-    }
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      const startTime = Date.now();
-      const duration = 60000; // 60 giây
-
-      timerInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, duration - elapsed);
-        timeRemaining = Math.ceil(remaining / 1000);
-
-        const m = Math.floor(timeRemaining / 60);
-        const s = timeRemaining % 60;
-        timerDisplay.textContent = `${m}:${String(s).padStart(2, '0')}`;
-        
-        // Hiệu ứng hết giờ (màu đỏ)
-        if (timeRemaining <= 10) timerDisplay.style.color = '#ff4757';
-        else timerDisplay.style.color = '#fff';
-
-        if (remaining <= 0) {
-          clearInterval(timerInterval);
-          stopExercise(false);
-        }
-      }, 200);
-    }
-
-    async function startExercise() {
-      if (isRunning) return;
+    function startGame() {
+      if(isRunning) return;
       isRunning = true;
       timeRemaining = 60;
-      stats = { correct: 0 };
-
-      // Reset style
+      stats.correct = 0;
       document.querySelectorAll('.word').forEach(w => w.classList.remove('correct', 'current'));
       
-      updateStats();
-      updateCurrentIndicator();
-
       startBtn.disabled = true;
-      // Hiệu ứng cuộn chữ
       textContent.classList.add('scrolling');
       
-      apiStatus.textContent = '🟢 Đang nghe...';
-      apiStatus.classList.add('active');
-
-      startTimer();
-
-      try {
-        await ensureMicReady();
-        recordOneChunk();
-      } catch (e) {
-        console.error(e);
-        alert('Lỗi Mic: Vui lòng cấp quyền truy cập microphone!');
-        stopExercise(false);
-      }
-    }
-
-    function stopExercise(completed) {
-      if (!isRunning) return;
-      isRunning = false;
-
-      clearInterval(timerInterval);
-      clearTimeout(recordingTimeout);
-      stopVAD();
-      try { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); } catch {}
-      try { if (stream) stream.getTracks().forEach(t => t.stop()); } catch {}
-      stream = null;
-
-      recordingIndicator.classList.remove('active');
-      startBtn.disabled = false;
-      textContent.classList.remove('scrolling');
-      apiStatus.classList.remove('active');
-      apiStatus.textContent = '🤖 IBM Watson Ready';
-
-      // --- TÍNH ĐIỂM VÀ HIỆN KẾT QUẢ ---
-      const finalScore = updateStats();
-      
-      // Xử lý thông báo "Gà" hay "Pháp"
-      resultModal.className = 'result-modal active'; // Reset class
-      
-      if (finalScore >= 50) {
-        // Chế độ Người Pháp
-        resultModal.classList.add('french-mode');
-        modalScore.textContent = `${finalScore}%`;
-        modalMsg.innerHTML = "Chúc mừng!<br>Bạn là người Pháp 🇫🇷🍷";
-      } else {
-        // Chế độ Con Gà
-        resultModal.classList.add('chicken-mode');
-        modalScore.textContent = `${finalScore}%`;
-        modalMsg.innerHTML = "Chúc mừng!<br>Bạn là con gàe 🐔🤣";
-      }
-    }
-
-    resetBtn.addEventListener('click', () => {
-      stopExercise(false);
-      timeRemaining = 60;
-      timerDisplay.textContent = '1:00';
-      timerDisplay.style.color = '#fff';
-      closeModal();
-      loadRandomText();
-    });
-
-    startBtn.addEventListener('click', startExercise);
-
-    // Load bài đầu tiên
-    loadRandomText();
-  </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Luyện Phát Âm (Avec Ann)</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html, body { height: 100%; width: 100%; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      /* Hình nền bảng tuần hoàn Neon */
-      background: url('bg.jpg') no-repeat center center fixed; 
-      background-size: cover;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      color: #fff; /* Chữ mặc định màu trắng cho nổi */
-    }
-
-    /* Lớp phủ tối để làm nổi chữ hơn trên nền ảnh rực rỡ */
-    .overlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.5); /* Tối đi 50% */
-      z-index: 0;
-    }
-
-    .app-container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 24px;
-      overflow: auto;
-      position: relative;
-      z-index: 1; /* Nổi lên trên lớp phủ */
-    }
-
-    .header { text-align: center; margin-bottom: 24px; }
-
-    /* Hiệu ứng chữ Neon phát sáng */
-    .header h1 {
-      color: #fff;
-      font-size: 42px; /* To hơn chút */
-      font-weight: 800;
-      text-transform: uppercase;
-      text-shadow: 
-        0 0 5px #fff,
-        0 0 10px #fff,
-        0 0 20px #ff00de,
-        0 0 30px #ff00de,
-        0 0 40px #ff00de;
-      margin-bottom: 10px;
-    }
-
-    .slogan {
-      font-size: 18px;
-      font-weight: 600;
-      background: rgba(0, 0, 0, 0.6);
-      display: inline-block;
-      padding: 8px 20px;
-      border-radius: 50px;
-      border: 1px solid #00ffea;
-      box-shadow: 0 0 10px #00ffea;
-      color: #00ffea;
-    }
-
-    .api-status {
-      margin-top: 15px;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      display: inline-block;
-      color: #aaa;
-    }
-    .api-status.active { color: #48bb78; font-weight: bold; border: 1px solid #48bb78; }
-
-    .main-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      max-width: 800px;
-      width: 100%;
-      margin: 0 auto;
-      min-height: 0;
-    }
-
-    .text-display-wrapper {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.95); /* Màu trắng đục */
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      overflow: hidden;
-      margin-bottom: 20px;
-      position: relative;
-    }
-
-    .text-display {
-      height: 100%;
-      overflow: hidden;
-      position: relative;
-      padding: 32px;
-      display: flex;
-      align-items: flex-end;
-    }
-
-    .text-content {
-      width: 100%;
-      padding: 0;
-      transform: translateY(100%);
-      transition: none;
-    }
-    .text-content.scrolling { transition: transform 60s linear; transform: translateY(-100%); }
-
-    .word {
-      display: inline;
-      font-size: 26px;
-      line-height: 1.8;
-      padding: 2px 4px;
-      border-radius: 4px;
-      color: #333; /* Chữ trong khung bài đọc màu đen */
-    }
-    .word.correct { background-color: #48bb78; color: #fff; font-weight: 600; }
-    .word.current { background-color: #ffd700; color: #000; font-weight: 700; transform: scale(1.1); display: inline-block;}
-
-    .controls {
-      display: flex; gap: 16px; align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.8); /* Nền đen mờ cho cụm nút */
-      padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.2);
-      margin-bottom: 16px; flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 14px 28px; font-size: 16px; font-weight: 600; border: none; border-radius: 12px;
-      cursor: pointer; transition: 0.2s; min-width: 120px;
-    }
-    .btn-start { background: #00ffea; color: #000; box-shadow: 0 0 15px #00ffea; }
-    .btn-start:hover { transform: scale(1.05); background: #fff; }
-    
-    .btn-reset { background: #ff00de; color: #fff; box-shadow: 0 0 15px #ff00de; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-
-    .timer {
-      font-size: 24px; font-weight: 700; color: #fff; min-width: 80px; text-align: center;
-      text-shadow: 0 0 10px cyan;
-    }
-
-    .stats {
-      background: rgba(0, 0, 0, 0.8);
-      padding: 15px; border-radius: 16px;
-      display: flex; justify-content: space-around;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    .stat-label { font-size: 14px; color: #bbb; margin-bottom: 4px; }
-    .stat-value { font-size: 24px; font-weight: 700; color: #fff; }
-    .stat-value.correct { color: #48bb78; text-shadow: 0 0 10px #48bb78; }
-
-    /* --- POPUP KẾT QUẢ --- */
-    .result-modal {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      z-index: 2000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(5px);
-    }
-    .result-modal.active { display: flex; animation: fadeIn 0.3s; }
-
-    .result-box {
-      background: #fff;
-      color: #333;
-      padding: 40px;
-      border-radius: 24px;
-      text-align: center;
-      max-width: 500px;
-      width: 90%;
-      box-shadow: 0 0 50px rgba(0, 255, 234, 0.5);
-      border: 4px solid #00ffea;
-    }
-    .result-title { font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #333; }
-    .result-score { font-size: 60px; font-weight: 900; color: #333; margin: 20px 0; }
-    .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 30px; }
-    
-    /* Style cho Người Pháp */
-    .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 50px #48bb78; }
-    .french-mode .result-score { color: #48bb78; }
-    
-    /* Style cho Con Gà */
-    .chicken-mode .result-box { border-color: #ff4757; box-shadow: 0 0 50px #ff4757; }
-    .chicken-mode .result-score { color: #ff4757; }
-
-    .btn-close {
-      background: #333; color: white; padding: 12px 30px; border-radius: 50px;
-      font-size: 18px; cursor: pointer; border: none;
-    }
-
-    /* Hiệu ứng ghi âm */
-    .recording-indicator {
-      position: fixed; bottom: 20px; right: 20px;
-      background: #ff4757; color: white; padding: 10px 20px;
-      border-radius: 50px; display: none; align-items: center; gap: 10px;
-      box-shadow: 0 0 20px #ff4757;
-      z-index: 1001; font-weight: bold;
-    }
-    .recording-indicator.active { display: flex; }
-    .pulse { width: 12px; height: 12px; background: #fff; border-radius: 50%; animation: pulse 1s infinite; }
-    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.4); } 100% { opacity: 1; transform: scale(1); } }
-    @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-  </style>
-</head>
-<body>
-  <div class="overlay"></div> <div class="app-container">
-    <header class="header">
-      <h1>🇫🇷 Avec Ann 🇫🇷</h1>
-      
-      <div class="slogan">
-        🤵 Bạn là người Pháp hay là con gàe? 🐔
-      </div>
-      
-      <br>
-      <div class="api-status" id="apiStatus">🤖 IBM Watson Ready</div>
-    </header>
-
-    <main class="main-content">
-      <div class="text-display-wrapper">
-        <div class="text-display">
-          <div class="text-content" id="textContent"></div>
-        </div>
-      </div>
-
-      <div class="controls">
-        <button class="btn btn-start" id="startBtn">Démarrer (Bắt đầu)</button>
-        <div class="timer">
-          <span id="timerDisplay">1:00</span>
-        </div>
-        <button class="btn btn-reset" id="resetBtn">Bài khác ></button>
-      </div>
-
-      <div class="stats">
-        <div class="stat-item">
-          <div class="stat-label">Chính xác</div>
-          <div class="stat-value" id="accuracyDisplay">0%</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">Đúng</div>
-          <div class="stat-value correct" id="correctDisplay">0</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">Chưa đọc</div>
-          <div class="stat-value" id="unreadDisplay">0</div>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <div class="recording-indicator" id="recordingIndicator">
-    <div class="pulse"></div>
-    <span>Đang nghe...</span>
-  </div>
-
-  <div class="result-modal" id="resultModal">
-    <div class="result-box">
-      <div class="result-title">KẾT QUẢ</div>
-      <div class="result-score" id="modalScore">0%</div>
-      <div class="result-msg" id="modalMsg">...</div>
-      <button class="btn-close" onclick="closeModal()">Đóng</button>
-    </div>
-  </div>
-
-  <script>
-    const frenchTexts = [
-      {
-        level: "A1",
-        text: "Bonjour je m'appelle Marie. J'habite à Paris. J'aime beaucoup le chocolat et les croissants."
-      },
-      {
-        level: "A2",
-        text: "Apprendre une nouvelle langue est comme ouvrir une fenêtre sur un monde inconnu. C'est une aventure passionnante."
-      },
-      {
-        level: "B1",
-        text: "Chaque jour est une opportunité pour progresser. Il ne faut pas avoir peur de faire des erreurs car c'est en tombant qu'on apprend à marcher."
-      }
-    ];
-
-    let currentText = [];
-    let isRunning = false;
-    let timeRemaining = 60;
-    let timerInterval = null;
-    let stats = { correct: 0 };
-
-    const textContent = document.getElementById('textContent');
-    const startBtn = document.getElementById('startBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const accuracyDisplay = document.getElementById('accuracyDisplay');
-    const correctDisplay = document.getElementById('correctDisplay');
-    const unreadDisplay = document.getElementById('unreadDisplay');
-    const recordingIndicator = document.getElementById('recordingIndicator');
-    const apiStatus = document.getElementById('apiStatus');
-    
-    // Elements cho Modal
-    const resultModal = document.getElementById('resultModal');
-    const modalScore = document.getElementById('modalScore');
-    const modalMsg = document.getElementById('modalMsg');
-
-    // ====== PHẦN XỬ LÝ ÂM THANH ======
-    let stream = null;
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let recordingTimeout = null;
-    let audioContext = null;
-    let analyser = null;
-    let sourceNode = null;
-    let rafId = null;
-    let maxRms = 0;
-
-    function closeModal() {
-      resultModal.classList.remove('active');
-    }
-
-    function normalizeText(text) {
-      if (!text) return '';
-      return text.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, ' ').trim();
-    }
-
-    function toPhonetic(word) {
-      if (!word) return '';
-      let p = word.toLowerCase();
-      // Quy tắc phát âm tiếng Pháp cơ bản để so sánh tốt hơn
-      p = p.replace(/[tdspxz]$/, '');
-      p = p.replace(/ent$/, 'e').replace(/er$/, 'e').replace(/ez$/, 'e').replace(/es$/, 'e');
-      p = p.replace(/eau/g, 'o').replace(/au/g, 'o');
-      p = p.replace(/ou/g, 'u');
-      p = p.replace(/ch/g, 'sh').replace(/ph/g, 'f').replace(/qu/g, 'k');
-      return p;
-    }
-
-    function levenshteinDistance(s1, s2) {
-      const m = [];
-      for (let i = 0; i <= s2.length; i++) m[i] = [i];
-      for (let j = 0; j <= s1.length; j++) m[0][j] = j;
-      for (let i = 1; i <= s2.length; i++) {
-        for (let j = 1; j <= s1.length; j++) {
-          m[i][j] = s2[i-1] === s1[j-1]
-            ? m[i-1][j-1]
-            : Math.min(m[i-1][j-1] + 1, m[i][j-1] + 1, m[i-1][j] + 1);
-        }
-      }
-      return m[s2.length][s1.length];
-    }
-
-    function calculateSimilarity(w1, w2) {
-      if (!w1 || !w2) return 0;
-      if (w1 === w2) return 1;
-      const p1 = toPhonetic(w1);
-      const p2 = toPhonetic(w2);
-      const maxLen = Math.max(w1.length, w2.length);
-      const maxPhoneLen = Math.max(p1.length, p2.length);
-      const textDist = levenshteinDistance(w1, w2);
-      const phoneDist = levenshteinDistance(p1, p2);
-      const textSim = maxLen > 0 ? (maxLen - textDist) / maxLen : 0;
-      const phoneSim = maxPhoneLen > 0 ? (maxPhoneLen - phoneDist) / maxPhoneLen : 0;
-      return textSim * 0.5 + phoneSim * 0.5;
-    }
-
-    function markWordCorrect(i) {
-      const el = document.getElementById(`word-${i}`);
-      if (!el || el.classList.contains('correct')) return false;
-      el.classList.remove('current');
-      el.classList.add('correct');
-      stats.correct++;
-      return true;
-    }
-
-    function getFirstUnmarkedIndex() {
-      for (let i = 0; i < currentText.length; i++) {
-        const el = document.getElementById(`word-${i}`);
-        if (el && !el.classList.contains('correct')) return i;
-      }
-      return -1;
-    }
-
-    function updateCurrentIndicator() {
-      const idx = getFirstUnmarkedIndex();
-      document.querySelectorAll('.word').forEach(el => el.classList.remove('current'));
-      if (idx !== -1) {
-        const el = document.getElementById(`word-${idx}`);
-        if(el) el.classList.add('current');
-      }
-    }
-
-    function updateStats() {
-      const total = currentText.length;
-      const correct = stats.correct;
-      const unread = Math.max(0, total - correct);
-      const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
-      accuracyDisplay.textContent = `${acc}%`;
-      correctDisplay.textContent = correct;
-      unreadDisplay.textContent = unread;
-      return acc;
-    }
-
-    async function transcribeAudio(audioBlob) {
-      try {
-        recordingIndicator.classList.add('active');
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'audio.webm');
-        
-        // Gọi API của bạn (đã sửa thành IBM trong api/transcribe.js)
-        const response = await fetch('/api/transcribe', { method: 'POST', body: formData });
-        
-        if (!response.ok) throw new Error('Network response was not ok');
-        const result = await response.json();
-        return (result.text || '').trim();
-      } catch (e) {
-        console.error("Transcribe error:", e);
-        return null;
-      } finally {
-        recordingIndicator.classList.remove('active');
-      }
-    }
-
-    // --- VAD (Voice Activity Detection) Đơn giản ---
-    function getRmsNow() {
-      if (!analyser) return 0;
-      const buffer = new Uint8Array(analyser.fftSize);
-      analyser.getByteTimeDomainData(buffer);
-      let sum = 0;
-      for (let i = 0; i < buffer.length; i++) {
-        const v = (buffer[i] - 128) / 128;
-        sum += v * v;
-      }
-      return Math.sqrt(sum / buffer.length);
-    }
-    function startVAD() {
-      maxRms = 0;
-      const loop = () => {
-        const rms = getRmsNow();
-        if (rms > maxRms) maxRms = rms;
-        rafId = requestAnimationFrame(loop);
-      };
-      loop();
-    }
-    function stopVAD() {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-
-    async function ensureMicReady() {
-      if (stream) return;
-      stream = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true }
-      });
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      sourceNode = audioContext.createMediaStreamSource(stream);
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      sourceNode.connect(analyser);
-    }
-
-    async function recordOneChunk() {
-      if (!isRunning) return;
-      await ensureMicReady();
-      audioChunks = [];
-      
-      const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
-        ? { mimeType: 'audio/webm;codecs=opus' } : {};
-      
-      mediaRecorder = new MediaRecorder(stream, options);
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunks.push(event.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        stopVAD();
-        clearTimeout(recordingTimeout);
-        if (!isRunning) return; // Nếu đã dừng game thì thôi
-
-        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-        
-        // Chỉ gửi nếu có tiếng nói (RMS > ngưỡng)
-        if (maxRms > 0.03 && blob.size > 3000) {
-          const text = await transcribeAudio(blob);
-          if (text) checkPronunciation(text);
-        }
-
-        // Loop ghi âm tiếp nếu còn thời gian và chưa hết bài
-        if (isRunning && timeRemaining > 0 && getFirstUnmarkedIndex() !== -1) {
-          setTimeout(() => { if (isRunning) recordOneChunk(); }, 100);
-        } else if (getFirstUnmarkedIndex() === -1) {
-          stopExercise(true); // Hoàn thành
-        }
-      };
-
-      startVAD();
-      mediaRecorder.start();
-      // Ghi âm mỗi đoạn 2.5s
-      recordingTimeout = setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-      }, 2500);
-    }
-
-    function checkPronunciation(spokenText) {
-      if (!isRunning) return;
-      const words = normalizeText(spokenText).split(/\s+/).filter(w => w.length > 0);
-      if (words.length > 8) return; // Bỏ qua nếu quá dài (nhiễu)
-
-      let idx = getFirstUnmarkedIndex();
-      if (idx === -1) return;
-
-      const THRESHOLD = 0.75; // Độ khó (càng cao càng khó)
-      let advanced = 0;
-
-      for (const w of words) {
-        if (advanced >= 2) break; // Chỉ check tối đa 2 từ tiếp theo
-        idx = getFirstUnmarkedIndex();
-        if (idx === -1) break;
-
-        const expected = normalizeText(currentText[idx]);
-        const sim = calculateSimilarity(w, expected);
-
-        if (sim >= THRESHOLD) {
-          markWordCorrect(idx);
-          advanced++;
-        } else {
-          break; // Sai từ hiện tại thì dừng
-        }
-      }
-      updateCurrentIndicator();
-      updateStats();
-    }
-
-    function loadRandomText() {
-      const pick = frenchTexts[Math.floor(Math.random() * frenchTexts.length)];
-      currentText = pick.text.split(/\s+/);
-
-      textContent.innerHTML = '';
-      currentText.forEach((word, i) => {
-        const span = document.createElement('span');
-        span.className = 'word';
-        span.id = `word-${i}`;
-        span.textContent = word + ' ';
-        textContent.appendChild(span);
-      });
-
-      stats = { correct: 0 };
-      updateStats();
-      textContent.classList.remove('scrolling');
-      void textContent.offsetHeight;
-      updateCurrentIndicator();
-    }
-
-    function startTimer() {
-      clearInterval(timerInterval);
-      const startTime = Date.now();
-      const duration = 60000; // 60 giây
+      // Reset Highlight
+      document.getElementById('word-0').classList.add('current');
 
       timerInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, duration - elapsed);
-        timeRemaining = Math.ceil(remaining / 1000);
+        timeRemaining--;
+        timerDisplay.textContent = `0:${timeRemaining.toString().padStart(2, '0')}`;
+        if(timeRemaining <= 0) stopGame();
+      }, 1000);
 
-        const m = Math.floor(timeRemaining / 60);
-        const s = timeRemaining % 60;
-        timerDisplay.textContent = `${m}:${String(s).padStart(2, '0')}`;
-        
-        // Hiệu ứng hết giờ (màu đỏ)
-        if (timeRemaining <= 10) timerDisplay.style.color = '#ff4757';
-        else timerDisplay.style.color = '#fff';
-
-        if (remaining <= 0) {
-          clearInterval(timerInterval);
-          stopExercise(false);
-        }
-      }, 200);
+      recordLoop();
     }
 
-    async function startExercise() {
-      if (isRunning) return;
-      isRunning = true;
-      timeRemaining = 60;
-      stats = { correct: 0 };
-
-      // Reset style
-      document.querySelectorAll('.word').forEach(w => w.classList.remove('correct', 'current'));
-      
-      updateStats();
-      updateCurrentIndicator();
-
-      startBtn.disabled = true;
-      // Hiệu ứng cuộn chữ
-      textContent.classList.add('scrolling');
-      
-      apiStatus.textContent = '🟢 Đang nghe...';
-      apiStatus.classList.add('active');
-
-      startTimer();
-
-      try {
-        await ensureMicReady();
-        recordOneChunk();
-      } catch (e) {
-        console.error(e);
-        alert('Lỗi Mic: Vui lòng cấp quyền truy cập microphone!');
-        stopExercise(false);
-      }
-    }
-
-    function stopExercise(completed) {
-      if (!isRunning) return;
+    function stopGame() {
       isRunning = false;
-
       clearInterval(timerInterval);
-      clearTimeout(recordingTimeout);
-      stopVAD();
-      try { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); } catch {}
-      try { if (stream) stream.getTracks().forEach(t => t.stop()); } catch {}
-      stream = null;
-
-      recordingIndicator.classList.remove('active');
+      try { if(mediaRecorder) mediaRecorder.stop(); } catch(e){}
+      try { if(stream) stream.getTracks().forEach(t=>t.stop()); stream=null; } catch(e){}
+      
       startBtn.disabled = false;
       textContent.classList.remove('scrolling');
-      apiStatus.classList.remove('active');
-      apiStatus.textContent = '🤖 IBM Watson Ready';
-
-      // --- TÍNH ĐIỂM VÀ HIỆN KẾT QUẢ ---
+      
       const finalScore = updateStats();
-      
-      // Xử lý thông báo "Gà" hay "Pháp"
-      resultModal.className = 'result-modal active'; // Reset class
-      
-      if (finalScore >= 50) {
-        // Chế độ Người Pháp
-        resultModal.classList.add('french-mode');
-        modalScore.textContent = `${finalScore}%`;
-        modalMsg.innerHTML = "Chúc mừng!<br>Bạn là người Pháp 🇫🇷🍷";
-      } else {
-        // Chế độ Con Gà
-        resultModal.classList.add('chicken-mode');
-        modalScore.textContent = `${finalScore}%`;
-        modalMsg.innerHTML = "Chúc mừng!<br>Bạn là con gàe 🐔🤣";
-      }
+      resultModal.className = 'result-modal active ' + (finalScore >= 50 ? 'french-mode' : 'chicken-mode');
+      modalScore.textContent = finalScore + '%';
+      modalMsg.innerHTML = finalScore >= 50 ? "Chúc mừng!<br>Bạn là người Pháp 🇫🇷" : "Chia buồn!<br>Bạn là con gàe 🐔";
     }
 
-    resetBtn.addEventListener('click', () => {
-      stopExercise(false);
-      timeRemaining = 60;
-      timerDisplay.textContent = '1:00';
-      timerDisplay.style.color = '#fff';
-      closeModal();
-      loadRandomText();
-    });
+    function init() {
+      const t = frenchTexts[Math.floor(Math.random()*frenchTexts.length)].text;
+      currentText = t.split(' ');
+      textContent.innerHTML = currentText.map((w,i) => `<span class="word" id="word-${i}">${w} </span>`).join('');
+    }
 
-    startBtn.addEventListener('click', startExercise);
-
-    // Load bài đầu tiên
-    loadRandomText();
+    startBtn.onclick = startGame;
+    resetBtn.onclick = () => { stopGame(); closeModal(); init(); };
+    init();
   </script>
 </body>
 </html>
