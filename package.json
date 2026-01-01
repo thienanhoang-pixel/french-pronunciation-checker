@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "type": "module",
   "description": "French pronunciation checker with OpenAI Whisper",
+  "main": "api/transcribe.js",
+  "scripts": {
+    "test": "echo \"No tests specified\""
+  },
   "dependencies": {
     "formidable": "^3.5.1",
     "form-data": "^4.0.0",
     "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.x"
   }
 }
