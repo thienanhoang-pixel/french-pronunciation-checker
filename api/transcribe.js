@@ -1,360 +1,67 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Luyện Nói Tiếng Pháp</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; width: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    
-    body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      flex-direction: column;
-      color: #333;
-    }
+import { IncomingForm } from 'formidable';
+import fs from 'fs';
+import SpeechToTextV1 from 'ibm-watson/speech-to-text/v1.js';
+import { IamAuthenticator } from 'ibm-watson/auth/index.js';
 
-    .app-container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 24px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
+export const config = {
+  api: {
+    bodyParser: false, // Bắt buộc để nhận file audio
+  },
+};
 
-    .header { text-align: center; margin-bottom: 20px; color: white; }
-    .header h1 { font-size: 28px; margin-bottom: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    
-    /* Khu vực hiển thị văn bản */
-    .text-display-area {
-      flex: 1;
-      background: white;
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      margin-bottom: 20px;
-      position: relative;
-      overflow: hidden; 
-      display: flex;
-      justify-content: center;
-    }
+// 1. Cấu hình IBM Watson
+// Hãy chắc chắn bạn đã cài: npm install ibm-watson
+const speechToText = new SpeechToTextV1({
+  authenticator: new IamAuthenticator({
+    apikey: process.env.IBM_API_KEY, // Lấy từ biến môi trường
+  }),
+  serviceUrl: process.env.IBM_URL,   // Lấy từ biến môi trường
+});
 
-    /* Container chứa nội dung */
-    #content-wrapper {
-      font-size: 26px;
-      line-height: 1.8;
-      color: #4a5568;
-      text-align: justify;
-      position: absolute;
-      top: 0; left: 30px; right: 30px;
-      padding-top: 150px; /* Padding để bắt đầu từ giữa */
-      transition: transform 0.5s ease; /* Hiệu ứng khi reset vị trí */
-    }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-    /* Class này kích hoạt hiệu ứng trôi */
-    .scrolling {
-      animation: scrollUp 60s linear forwards; 
-    }
-
-    @keyframes scrollUp {
-      from { transform: translateY(0); }
-      to { transform: translateY(-100%); }
-    }
-
-    /* --- STYLE CHO TỪ ĐÚNG/SAI --- */
-    .word {
-      display: inline-block;
-      margin-right: 6px;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: all 0.3s;
-    }
-
-    /* Đúng: Xanh lá */
-    .word.correct {
-      background-color: #c6f6d5;
-      color: #22543d;
-      border-bottom: 2px solid #48bb78;
-    }
-
-    /* Sai: Đỏ nhạt */
-    .word.wrong {
-      background-color: #fed7d7;
-      color: #822727;
-      text-decoration: line-through;
-      opacity: 0.7;
-    }
-
-    /* --- BUTTONS --- */
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      padding: 10px;
-    }
-
-    .btn {
-      border: none;
-      padding: 15px 30px;
-      border-radius: 50px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      min-width: 200px;
-    }
-
-    .btn-main { background: #fbbf24; color: #744210; } /* Màu vàng chủ đạo */
-    .btn-main:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); background: #f59e0b;}
-    
-    .btn-next { background: #e2e8f0; color: #4a5568; } /* Màu xám cho nút bài khác */
-    .btn-next:hover { background: #cbd5e0; }
-
-    /* Khi ở trạng thái "Làm lại", đổi màu nút main */
-    .btn-retry { background: #48bb78 !important; color: white !important; }
-
-    .timer {
-      position: absolute;
-      top: 20px; right: 20px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-weight: bold;
-      z-index: 10;
-      font-family: monospace;
-      font-size: 18px;
-    }
-
-    /* Popup kết quả */
-    .result-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.85);
-      display: none;
-      justify-content: center; align-items: center;
-      z-index: 100;
-      flex-direction: column;
-    }
-    .result-box {
-      background: white; padding: 40px; border-radius: 20px; text-align: center;
-      max-width: 400px; width: 90%;
-    }
-    .result-score { font-size: 60px; color: #48bb78; font-weight: bold; margin: 10px 0; }
-
-  </style>
-</head>
-<body>
-
-  <div class="app-container">
-    <div class="header">
-      <h1>🇫🇷 Luyện Phát Âm (IBM Watson)</h1>
-    </div>
-
-    <div class="text-display-area">
-      <div class="timer" id="timer">01:00</div>
-      <div id="content-wrapper">
-        </div>
-    </div>
-
-    <div class="controls">
-      <button id="mainBtn" class="btn btn-main">Démarrer (Bắt đầu)</button>
-      
-      <button id="nextLessonBtn" class="btn btn-next">Bài khác ></button>
-    </div>
-  </div>
-
-  <div class="result-overlay" id="resultOverlay">
-    <div class="result-box">
-      <h2>Kết quả</h2>
-      <div class="result-score" id="finalScore">--</div>
-      <p id="wordCountMsg">...</p>
-      <br>
-      <button class="btn btn-main" onclick="closeResult()">Xem chi tiết lỗi sai</button>
-    </div>
-  </div>
-
-  <script>
-    // --- NỘI DUNG BÀI ĐỌC ---
-    const frenchText = `
-      Apprendre une nouvelle langue est comme ouvrir une fenêtre sur un monde inconnu. 
-      C’est une aventure passionnante qui demande du courage et de la patience. 
-      Quand on parle français, on découvre la culture de la France, la beauté de Paris 
-      et l’histoire des grands écrivains comme Victor Hugo. 
-      
-      Chaque jour est une opportunité pour progresser. 
-      Il ne faut pas avoir peur de faire des erreurs, car c’est en tombant qu’on apprend à marcher. 
-      Écoutez de la musique, regardez des films et parlez avec des amis. 
-      
-      Le voyage est plus important que la destination. 
-      Alors, respirez profondément, souriez et commencez à lire ce texte avec confiance. 
-      Votre effort aujourd'hui sera votre succès de demain. 
-    `;
-
-    // Biến hệ thống
-    let mediaRecorder;
-    let fullTranscript = ""; 
-    let timerInterval, recordingInterval;
-    const TIME_LIMIT = 60;
-    let timeLeft = TIME_LIMIT;
-    let isFinished = false;
-
-    // DOM Elements
-    const contentWrapper = document.getElementById('content-wrapper');
-    const mainBtn = document.getElementById('mainBtn');
-    const nextLessonBtn = document.getElementById('nextLessonBtn');
-    const timerDisplay = document.getElementById('timer');
-    const resultOverlay = document.getElementById('resultOverlay');
-
-    // 1. Chuẩn bị văn bản khi vào trang
-    function initText() {
-      const words = frenchText.trim().split(/\s+/);
-      contentWrapper.innerHTML = '';
-      words.forEach(word => {
-        const span = document.createElement('span');
-        span.className = 'word';
-        span.textContent = word;
-        span.dataset.clean = normalizeWord(word); 
-        contentWrapper.appendChild(span);
+  try {
+    // 2. Nhận file ghi âm từ Frontend
+    const data = await new Promise((resolve, reject) => {
+      const form = new IncomingForm();
+      form.parse(req, (err, fields, files) => {
+        if (err) return reject(err);
+        resolve({ fields, files });
       });
-    }
-
-    function normalizeWord(word) {
-      return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s+/g, "");
-    }
-
-    // 2. Xử lý nút bấm chính
-    mainBtn.addEventListener('click', async () => {
-      // Nếu bài đã xong -> Nút này đóng vai trò là "Làm lại"
-      if (isFinished) {
-        location.reload(); // Cách sạch nhất để reset mọi thứ
-        return;
-      }
-
-      // Nếu chưa xong -> Nút này đóng vai trò "Bắt đầu"
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        startSession(stream);
-      } catch (err) {
-        alert("Lỗi Micro: " + err.message);
-      }
     });
 
-    // 3. Logic Bắt đầu
-    function startSession(stream) {
-      // UI Updates
-      mainBtn.disabled = true;
-      mainBtn.textContent = "Đang nghe...";
-      contentWrapper.classList.add('scrolling'); // Bắt đầu trôi chữ
-
-      fullTranscript = "";
-      
-      // Setup Ghi âm
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) sendToIBM(e.data);
-      };
-
-      // Chunking: Cắt file 3s/lần gửi lên server
-      mediaRecorder.start();
-      recordingInterval = setInterval(() => {
-        if(mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-          mediaRecorder.start();
-        }
-      }, 3000);
-
-      // Đếm ngược
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
-        if (timeLeft <= 0) finishSession();
-      }, 1000);
+    const audioFile = data.files.audio;
+    if (!audioFile) {
+      return res.status(400).json({ error: 'Không tìm thấy file audio' });
     }
 
-    // 4. Kết thúc
-    function finishSession() {
-      // Dừng logic
-      clearInterval(timerInterval);
-      clearInterval(recordingInterval);
-      if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-      
-      // UI Updates
-      mainBtn.textContent = "Đang chấm điểm...";
-      
-      // QUAN TRỌNG: Sửa lỗi màn hình trắng
-      // Loại bỏ class scrolling để dừng animation
-      contentWrapper.classList.remove('scrolling');
-      // Reset vị trí chữ về đầu trang để người dùng nhìn thấy
-      contentWrapper.style.transform = 'translateY(0)';
-      contentWrapper.style.paddingTop = '50px'; // Đẩy xuống một chút cho đẹp
+    // Lấy đường dẫn file (xử lý khác nhau tùy phiên bản formidable)
+    const filePath = Array.isArray(audioFile) ? audioFile[0].filepath : audioFile.filepath;
 
-      // Đợi 2s để API trả nốt kết quả cuối cùng
-      setTimeout(calculateResult, 2000);
-    }
+    // 3. Gửi sang IBM Watson để dịch
+    const params = {
+      audio: fs.createReadStream(filePath),
+      contentType: 'audio/webm', // Định dạng file từ trình duyệt
+      model: 'fr-FR_NarrowbandModel', // Model tiếng Pháp tối ưu cho giọng nói
+    };
 
-    // 5. Chấm điểm & Tô màu
-    function calculateResult() {
-      isFinished = true;
-      const allSpokenWords = fullTranscript.toLowerCase();
-      const domWords = document.querySelectorAll('.word');
-      let correctCount = 0;
-
-      domWords.forEach(span => {
-        const original = span.dataset.clean;
-        
-        // Logic tô màu
-        if (allSpokenWords.includes(original)) {
-          span.classList.add('correct'); // Xanh
-          correctCount++;
-        } else {
-          span.classList.add('wrong');   // Đỏ
-        }
-      });
-
-      // Tính %
-      const score = Math.round((correctCount / domWords.length) * 100);
-
-      // Hiện Popup
-      document.getElementById('finalScore').textContent = `${score}%`;
-      document.getElementById('wordCountMsg').textContent = `Đúng ${correctCount}/${domWords.length} từ`;
-      resultOverlay.style.display = 'flex';
-
-      // Đổi nút thành "Làm lại"
-      mainBtn.disabled = false;
-      mainBtn.textContent = "🔄 Làm lại bài này";
-      mainBtn.classList.add('btn-retry'); // Đổi màu nút sang xanh
-    }
-
-    function closeResult() {
-      resultOverlay.style.display = 'none';
-      // Lúc này người dùng sẽ nhìn thấy văn bản đã được tô xanh/đỏ
-    }
-
-    // Nút Bài khác (Demo)
-    nextLessonBtn.addEventListener('click', () => {
-      alert("Tính năng tải bài học tiếp theo sẽ được cập nhật sớm!");
-    });
-
-    // Gọi hàm init
-    initText();
+    const { result } = await speechToText.recognize(params);
     
-    // Gửi data (giữ nguyên logic cũ)
-    async function sendToIBM(blob) {
-      const formData = new FormData();
-      formData.append('audio', blob, 'chunk.webm');
-      try {
-        const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
-        const data = await res.json();
-        if (data.text) {
-          fullTranscript += " " + data.text;
-          console.log("Nghe được:", fullTranscript);
-        }
-      } catch (e) { console.error(e); }
-    }
-  </script>
-</body>
-</html>
+    // 4. Lấy kết quả trả về
+    // IBM trả về cấu trúc phức tạp, cần bóc tách lấy text
+    const transcript = result.results
+      .map(r => r.alternatives[0].transcript)
+      .join(' ');
+
+    console.log("IBM nghe được:", transcript); // Log để check lỗi trên server
+
+    return res.status(200).json({ text: transcript });
+
+  } catch (error) {
+    console.error('Lỗi IBM:', error);
+    return res.status(500).json({ error: error.message });
+  }
+}
