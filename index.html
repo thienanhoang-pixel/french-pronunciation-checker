@@ -11,7 +11,7 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      /* Nhớ file ảnh nền */
+      /* Đảm bảo file ảnh tên là bg.jpg */
       background: url('bg.jpg') no-repeat center center fixed; 
       background-size: cover;
       display: flex; flex-direction: column; overflow: hidden; color: #fff;
@@ -49,47 +49,30 @@
     .text-display-wrapper {
       flex: 1; background: rgba(255, 255, 255, 0.95);
       border-radius: 16px; 
-      overflow: hidden; /* Mặc định ẩn thanh cuộn */
+      overflow: hidden; 
       margin-bottom: 15px; position: relative;
       border: 2px solid rgba(255,255,255,0.2);
       display: flex; flex-direction: column;
     }
 
-    /* Khu vực chứa bài đọc */
     .text-display {
-      flex: 1;
-      position: relative;
-      padding: 0 40px; /* Sửa lỗi sát lề: Padding 2 bên rộng hơn */
-      overflow-y: hidden; /* Khi đọc thì ẩn cuộn */
-      display: block; 
+      flex: 1; position: relative; padding: 0 40px; overflow-y: hidden; display: block; 
     }
 
-    /* Class này sẽ được thêm vào khi kết thúc để hiện thanh cuộn */
     .text-display.review-mode {
-      overflow-y: auto; /* Cho phép cuộn */
-      padding-top: 20px;
-      padding-bottom: 20px;
+      overflow-y: auto; padding-top: 20px; padding-bottom: 20px;
     }
 
-    /* Container chứa chữ (để trôi lên) */
     #content-wrapper {
-      width: 100%; 
-      text-align: justify;
-      position: absolute; 
-      top: 100%; /* Bắt đầu từ dưới đáy */
-      left: 0; right: 0;
+      width: 100%; text-align: justify;
+      position: absolute; top: 100%; left: 0; right: 0;
       padding-bottom: 100px;
     }
 
-    /* Khi review thì bỏ position absolute để về layout bình thường */
     .review-mode #content-wrapper {
-      position: relative;
-      top: 0 !important;
-      transform: none !important;
-      animation: none !important;
+      position: relative; top: 0 !important; transform: none !important; animation: none !important;
     }
 
-    /* Animation trôi chữ */
     .scrolling { animation: scrollUp 60s linear forwards; }
     @keyframes scrollUp { 
       from { top: 100%; transform: translateY(0); } 
@@ -103,11 +86,9 @@
     .word.correct { background-color: #48bb78; color: #fff; }
     .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.6; }
 
-    /* Controls */
     .controls {
       display: flex; gap: 15px; align-items: center; justify-content: center;
-      background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 16px;
-      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 16px; flex-shrink: 0;
     }
 
     .btn {
@@ -120,7 +101,6 @@
     
     .timer { font-size: 24px; font-weight: 700; color: #fff; min-width: 70px; text-align: center; }
 
-    /* Modal Kết quả */
     .result-modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.9); z-index: 2000; display: none;
@@ -140,6 +120,7 @@
       position: absolute; top: 10px; left: 10px; 
       background: #333; color: #fff; padding: 4px 10px; 
       border-radius: 4px; font-size: 12px; z-index: 10;
+      text-transform: uppercase; letter-spacing: 1px;
     }
   </style>
 </head>
@@ -154,7 +135,7 @@
 
     <main class="main-content">
       <div class="text-display-wrapper">
-        <div class="topic-badge" id="topicDisplay">Chủ đề: Giới thiệu</div>
+        <div class="topic-badge" id="topicDisplay">Topic</div>
         <div class="timer" id="timer" style="position: absolute; top: 10px; right: 10px; color: #333; z-index: 10;">01:00</div>
         
         <div class="text-display" id="textDisplayArea">
@@ -164,7 +145,7 @@
 
       <div class="controls">
         <button id="mainBtn" class="btn btn-main">Démarrer (Bắt đầu)</button>
-        <button id="nextBtn" class="btn btn-next">Bài tiếp theo ></button>
+        <button id="nextBtn" class="btn btn-next">Bài khác (Autres) ></button>
       </div>
     </main>
   </div>
@@ -180,47 +161,47 @@
 
   <script>
     // ==========================================
-    // KHU VỰC THÊM BÀI ĐỌC (DATA)
+    // THƯ VIỆN BÀI ĐỌC (10 BÀI DÀI)
     // ==========================================
     const readingLibrary = [
       {
-        topic: "Bài 1: Khám phá Paris",
+        topic: "Khám phá Paris",
         text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles."
       },
       {
-        topic: "Bài 2: Nghệ thuật sống (Art de vivre)",
+        topic: "Nghệ thuật sống",
         text: "En France, la gastronomie est bien plus qu'une simple façon de se nourrir, c'est un véritable art de vivre. Le repas est un moment sacré où la famille et les amis se réunissent pour partager du bonheur et des discussions animées. On prend le temps de déguster chaque plat, de l'entrée au dessert, accompagné souvent d'un verre de vin rouge ou blanc. Les marchés locaux regorgent de produits frais : des fromages variés, des légumes colorés et des fruits délicieux. Cuisiner est un acte d'amour et de tradition. Chaque région possède ses propres spécialités et ses secrets culinaires qui se transmettent de génération en génération avec fierté."
       },
       {
-        topic: "Bài 3: Lợi ích của việc đọc sách",
+        topic: "Lợi ích của việc đọc sách",
         text: "Dans notre monde moderne dominé par les écrans et la technologie, prendre le temps de lire un livre est devenu un luxe précieux. La lecture nous permet de voyager sans bouger de notre fauteuil. Elle ouvre notre esprit à de nouvelles idées, enrichit notre vocabulaire et stimule notre imagination. Quand on lit un roman, on vit mille vies différentes, on ressent les émotions des personnages et on oublie nos propres soucis quotidiens. Que ce soit de la poésie, de la science-fiction ou de l'histoire, chaque livre est une porte ouverte vers un autre univers. C'est une habitude qui calme l'esprit et nourrit l'âme en profondeur."
       },
       {
-        topic: "Bài 4: Bảo vệ thiên nhiên",
+        topic: "Bảo vệ thiên nhiên",
         text: "La nature nous offre tout ce dont nous avons besoin pour vivre : l'air que nous respirons, l'eau que nous buvons et la nourriture que nous mangeons. Cependant, l'activité humaine menace aujourd'hui cet équilibre fragile. Les forêts disparaissent, les océans sont pollués et le climat change rapidement. Il est urgent de changer nos habitudes pour protéger notre belle planète bleue. Des gestes simples peuvent faire une grande différence, comme réduire notre consommation de plastique, recycler nos déchets ou utiliser les transports en commun. Protéger l'environnement, ce n'est pas seulement sauver les animaux, c'est aussi assurer un avenir sain et heureux pour nos enfants et les générations futures."
       },
       {
-        topic: "Bài 5: Giá trị của tình bạn",
+        topic: "Giá trị của tình bạn",
         text: "On dit souvent que les amis sont la famille que l'on choisit. Une amitié véritable est l'une des choses les plus précieuses dans la vie d'une personne. Un vrai ami est quelqu'un qui est là pour vous dans les moments difficiles, qui vous écoute sans vous juger et qui partage vos joies comme vos peines. Avec le temps et la distance, il est parfois difficile de garder le contact, mais les liens forts résistent à tout. Ce n'est pas la quantité d'amis qui compte, mais la qualité. Avoir une personne sur qui compter, avec qui rire et pleurer, est un cadeau inestimable qui rend la vie beaucoup plus douce."
       },
       {
-        topic: "Bài 6: Du lịch và trải nghiệm",
+        topic: "Du lịch và trải nghiệm",
         text: "Voyager est la meilleure école de la vie. Quand on visite un pays étranger, on ne découvre pas seulement de nouveaux paysages, on découvre aussi une nouvelle façon de penser et de vivre. On apprend à sortir de sa zone de confort, à goûter des aliments inconnus et à essayer de parler une autre langue. Ces expériences nous rendent plus ouverts, plus tolérants et plus humbles. On réalise que malgré nos différences culturelles, les êtres humains partagent les mêmes rêves et les mêmes émotions partout sur la Terre. Le voyage nous change intérieurement et nous laisse des souvenirs gravés à jamais dans notre mémoire."
       },
       {
-        topic: "Bài 7: Thể thao và sức khỏe",
+        topic: "Thể thao và sức khỏe",
         text: "Le sport joue un rôle essentiel pour maintenir une bonne santé physique et mentale. Pratiquer une activité physique régulière aide à réduire le stress, à améliorer le sommeil et à renforcer le cœur. Que ce soit la course à pied, la natation, le yoga ou le football, l'important est de bouger et de se faire plaisir. Le sport nous apprend aussi des valeurs importantes comme la discipline, le respect des règles et l'esprit d'équipe. Se dépasser, fixer des objectifs et voir ses progrès procure une grande satisfaction personnelle. Comme on dit souvent : un esprit sain dans un corps sain est la clé du bonheur."
       },
       {
-        topic: "Bài 8: Công nghệ và cuộc sống",
+        topic: "Công nghệ và cuộc sống",
         text: "La technologie a transformé notre façon de vivre à une vitesse incroyable. Aujourd'hui, nous pouvons communiquer instantanément avec des personnes à l'autre bout du monde, accéder à toute la connaissance humaine en un clic et travailler depuis n'importe où. Cependant, cette connexion permanente a aussi ses inconvénients. Nous passons parfois plus de temps à regarder nos téléphones qu'à parler aux gens qui sont en face de nous. Il est important de trouver un équilibre. La technologie doit rester un outil pour nous servir, et non un maître qui contrôle notre temps et notre attention. Savoir se déconnecter est devenu une compétence essentielle."
       },
       {
-        topic: "Bài 9: Hạnh phúc từ điều giản đơn",
+        topic: "Hạnh phúc từ điều giản đơn",
         text: "Beaucoup de gens cherchent le bonheur dans la richesse, la célébrité ou la réussite professionnelle. Pourtant, le vrai bonheur se cache souvent dans les choses simples de la vie quotidienne. C'est l'odeur de la pluie en été, le sourire d'un enfant, un repas partagé avec des proches ou une promenade tranquille dans la forêt. Savoir apprécier l'instant présent est un secret que nous oublions trop souvent. La gratitude est une clé puissante : être reconnaissant pour ce que l'on a, au lieu de toujours désirer ce que l'on n'a pas. Le bonheur n'est pas une destination à atteindre, c'est une manière de voyager chaque jour."
       },
       {
-        topic: "Bài 10: Giấc mơ và nỗ lực",
+        topic: "Giấc mơ và nỗ lực",
         text: "Avoir des rêves est ce qui donne un sens à notre existence. Que ce soit devenir médecin, voyager autour du monde, écrire un livre ou simplement fonder une famille heureuse, nos rêves nous poussent à avancer. Mais rêver ne suffit pas, il faut aussi avoir le courage d'agir. Le chemin vers le succès est souvent rempli d'obstacles et d'échecs. Ce n'est pas grave de tomber, l'important est de se relever et de continuer à essayer. La persévérance et le travail acharné sont les clés de la réussite. Ne laissez jamais personne vous dire que vos rêves sont impossibles, car votre potentiel est infini."
       }
     ];
@@ -249,7 +230,8 @@
     // Load bài đọc
     function loadText(index) {
       const data = readingLibrary[index];
-      topicDisplay.textContent = `Chủ đề ${index + 1}: ${data.topic}`;
+      // Chỉ hiện tên Topic
+      topicDisplay.textContent = data.topic;
       
       const words = data.text.trim().split(/\s+/);
       contentWrapper.innerHTML = '';
@@ -291,16 +273,18 @@
       }
     });
 
-    // Nút Bài tiếp theo
+    // Nút Bài khác (RANDOM)
     nextBtn.addEventListener('click', () => {
-      // Dừng mọi thứ nếu đang chạy
       clearInterval(timerInterval);
       clearInterval(recordingInterval);
       if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
       
-      // Chuyển bài
-      currentIdx++;
-      if (currentIdx >= readingLibrary.length) currentIdx = 0; // Quay vòng
+      let newIdx;
+      do {
+        newIdx = Math.floor(Math.random() * readingLibrary.length);
+      } while (newIdx === currentIdx && readingLibrary.length > 1);
+      
+      currentIdx = newIdx;
       loadText(currentIdx);
     });
 
@@ -317,7 +301,6 @@
       };
 
       mediaRecorder.start();
-      // Cắt file gửi đi mỗi 3 giây
       recordingInterval = setInterval(() => {
         if(mediaRecorder.state === 'recording') {
           mediaRecorder.stop();
@@ -348,7 +331,7 @@
       if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
       
       mainBtn.textContent = "Đang chấm điểm...";
-      setTimeout(calculateResult, 2000); // Đợi API trả về hết
+      setTimeout(calculateResult, 2000); 
     }
 
     function calculateResult() {
@@ -390,8 +373,7 @@
 
     function closeResult() {
       resultModal.style.display = 'none';
-      
-      // KÍCH HOẠT CHẾ ĐỘ XEM LẠI (Sửa lỗi scroll)
+      // Bật chế độ review để hiện thanh cuộn
       textDisplayArea.classList.add('review-mode');
     }
 
