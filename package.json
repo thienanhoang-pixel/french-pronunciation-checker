@@ -1,0 +1,11 @@
+{
+  "name": "french-pronunciation-checker",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "French pronunciation checker with OpenAI Whisper",
+  "dependencies": {
+    "formidable": "^3.5.1",
+    "form-data": "^4.0.0",
+    "node-fetch": "^2.7.0"
+  }
+}

@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>French Pronunciation Checker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      height: 100%;
+      width: 100%;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .app-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow: auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .header h1 {
+      color: #ffffff;
+      font-size: 32px;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .api-status {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      margin-top: 8px;
+      font-size: 14px;
+      display: inline-block;
+    }
+
+    .api-status.active {
+      background: rgba(72, 187, 120, 0.3);
+    }
+    
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      min-height: 0;
+    }
+    
+    .text-display-wrapper {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      margin-bottom: 20px;
+      position: relative;
+      min-height: 0;
+    }
+    
+    .text-display {
+      height: 100%;
+      overflow: hidden;
+      position: relative;
+      padding: 32px;
+      display: flex;
+      align-items: flex-end;
+    }
+    
+    .text-content {
+      width: 100%;
+      padding: 0;
+      transform: translateY(100%);
+      transition: none;
+    }
+    
+    .text-content.scrolling {
+      transition: transform 60s linear;
+      transform: translateY(-100%);
+    }
+    
+    .word {
+      display: inline;
+      font-size: 24px;
+      line-height: 1.8;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      color: #2d3748;
+    }
+    
+    .word.correct {
+      background-color: #48bb78;
+      color: #ffffff;
+    }
+    
+    .word.incorrect {
+      background-color: #f56565;
+      color: #ffffff;
+    }
+    
+    .word.current {
+      background-color: #ffd700;
+      color: #2d3748;
+      font-weight: 600;
+      animation: pulse-current 1.5s infinite;
+    }
+
+    @keyframes pulse-current {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      margin-bottom: 16px;
+    }
+    
+    .btn {
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 120px;
+    }
+    
+    .btn-start {
+      background: #48bb78;
+      color: #ffffff;
+    }
+    
+    .btn-start:hover:not(:disabled) {
+      background: #38a169;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(72, 187, 120, 0.4);
+    }
+    
+    .btn-reset {
+      background: #ed8936;
+      color: #ffffff;
+    }
+    
+    .btn-reset:hover:not(:disabled) {
+      background: #dd6b20;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(237, 137, 54, 0.4);
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .timer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      background: #edf2f7;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #2d3748;
+      min-width: 140px;
+      justify-content: center;
+    }
+    
+    .stats {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    
+    .stat-item {
+      text-align: center;
+    }
+    
+    .stat-label {
+      font-size: 14px;
+      color: #718096;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2d3748;
+    }
+    
+    .stat-value.correct {
+      color: #48bb78;
+    }
+    
+    .stat-value.incorrect {
+      color: #f56565;
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000;
+      text-align: center;
+      max-width: 90%;
+      font-weight: 600;
+      color: white;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%);
+        opacity: 1;
+      }
+    }
+
+    .recording-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      z-index: 1001;
+    }
+
+    .recording-indicator.active {
+      display: flex;
+    }
+
+    .pulse {
+      width: 10px;
+      height: 10px;
+      background: #f56565;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    
+    @media (max-width: 768px) {
+      .app-container {
+        padding: 16px;
+      }
+      
+      .header h1 {
+        font-size: 24px;
+      }
+      
+      .word {
+        font-size: 18px;
+      }
+      
+      .controls {
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .btn {
+        width: 100%;
+        min-width: auto;
+      }
+      
+      .timer {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <h1>🇫🇷 French Pronunciation Checker</h1>
+      <div class="api-status" id="apiStatus">🤖 OpenAI Whisper Ready</div>
+    </header>
+    
+    <main class="main-content">
+      <div class="text-display-wrapper">
+        <div class="text-display">
+          <div class="text-content" id="textContent"></div>
+        </div>
+      </div>
+      
+      <div class="controls">
+        <button class="btn btn-start" id="startBtn">Démarrer</button>
+        <div class="timer">
+          <span>⏱️</span>
+          <span id="timerDisplay">1:00</span>
+        </div>
+        <button class="btn btn-reset" id="resetBtn">Nouveau texte</button>
+      </div>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-label">Précision</div>
+          <div class="stat-value" id="accuracyDisplay">0%</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Correct</div>
+          <div class="stat-value correct" id="correctDisplay">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Incorrect</div>
+          <div class="stat-value incorrect" id="incorrectDisplay">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Total</div>
+          <div class="stat-value" id="totalDisplay">0</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="recording-indicator" id="recordingIndicator">
+    <div class="pulse"></div>
+    <span>Écoute...</span>
+  </div>
+
+  <script>
+    const frenchTexts = [
+      {
+        level: "A1",
+        text: "Bonjour je m'appelle Marie. J'habite à Paris. J'aime beaucoup le chocolat et les croissants. Tous les matins je vais à la boulangerie. Je bois du café avec mes amis. Nous parlons de notre journée. Le weekend je visite des musées. J'adore l'art et la culture française."
+      },
+      {
+        level: "A2",
+        text: "Hier j'ai visité le Louvre avec ma famille. C'était magnifique. Nous avons vu la Joconde et beaucoup d'autres tableaux célèbres. Après le musée nous sommes allés manger dans un restaurant traditionnel. J'ai commandé du boeuf bourguignon. C'était excellent. Mon frère a pris des escargots pour la première fois."
+      },
+      {
+        level: "B1",
+        text: "Chaque matin Julien se réveille avant le lever du soleil. Il prend quelques minutes pour regarder le ciel et respirer profondément. Pour lui le temps est précieux et chaque journée mérite d'être vécue avec attention. Autrefois Julien passait ses journées à courir sans réfléchir. Il travaillait beaucoup et parlait peu avec les autres."
+      },
+      {
+        level: "B2",
+        text: "La révolution numérique a profondément transformé nos modes de vie et nos interactions sociales. Si elle offre des opportunités sans précédent en termes de communication et d'accès à l'information elle soulève également des questions importantes concernant la protection de la vie privée et la dépendance technologique."
+      },
+      {
+        level: "C1",
+        text: "L'anthropocène cette nouvelle ère géologique marquée par l'impact prépondérant des activités humaines sur les écosystèmes terrestres constitue un défi existentiel pour notre civilisation. Les scientifiques s'accordent sur l'urgence d'une transformation radicale de nos modèles économiques et sociétaux."
+      }
+    ];
+
+    let currentText = [];
+    let currentWordIndex = 0;
+    let isRunning = false;
+    let timeRemaining = 60;
+    let timerInterval = null;
+    let stats = { correct: 0, incorrect: 0, total: 0 };
+    let mediaRecorder = null;
+    let audioChunks = [];
+
+    const textContent = document.getElementById('textContent');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const accuracyDisplay = document.getElementById('accuracyDisplay');
+    const correctDisplay = document.getElementById('correctDisplay');
+    const incorrectDisplay = document.getElementById('incorrectDisplay');
+    const totalDisplay = document.getElementById('totalDisplay');
+    const recordingIndicator = document.getElementById('recordingIndicator');
+    const apiStatus = document.getElementById('apiStatus');
+
+    function showNotification(message, isError = false) {
+      const notification = document.createElement('div');
+      notification.className = 'notification';
+      notification.style.background = isError ? '#f56565' : '#48bb78';
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideDown 0.3s ease reverse';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    async function transcribeAudio(audioBlob) {
+      try {
+        recordingIndicator.classList.add('active');
+
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.webm');
+
+        const response = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+
+        recordingIndicator.classList.remove('active');
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        console.log('Transcription:', result.text);
+        return result.text;
+
+      } catch (error) {
+        recordingIndicator.classList.remove('active');
+        console.error('Transcription error:', error);
+        showNotification('⚠️ Erreur transcription', true);
+        return null;
+      }
+    }
+
+    async function startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: { 
+            channelCount: 1, 
+            sampleRate: 16000,
+            echoCancellation: true,
+            noiseSuppression: true
+          } 
+        });
+
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm;codecs=opus'
+        });
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          
+          if (audioBlob.size > 1000 && isRunning) {
+            const text = await transcribeAudio(audioBlob);
+            if (text && isRunning) {
+              checkPronunciation(text);
+            }
+          }
+
+          audioChunks = [];
+          
+          if (isRunning && timeRemaining > 0 && currentWordIndex < currentText.length) {
+            setTimeout(() => { 
+              if (isRunning) startRecording(); 
+            }, 200);
+          }
+        };
+
+        mediaRecorder.start();
+        
+        setTimeout(() => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        }, 2000);
+
+      } catch (error) {
+        console.error('Recording error:', error);
+        showNotification('❌ Erreur microphone', true);
+        stopExercise();
+      }
+    }
+
+    function normalizeText(text) {
+      return text.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, '')
+        .trim();
+    }
+
+    function toPhonetic(word) {
+      let p = word.toLowerCase();
+      p = p.replace(/[tdspxz]$/, '');
+      p = p.replace(/ent$/, 'e').replace(/er$/, 'e').replace(/ez$/, 'e');
+      p = p.replace(/eau/g, 'o').replace(/au/g, 'o');
+      p = p.replace(/ai/g, 'e').replace(/ei/g, 'e');
+      p = p.replace(/ou/g, 'u').replace(/eu/g, 'e');
+      p = p.replace(/oi/g, 'wa').replace(/oin/g, 'wan');
+      p = p.replace(/ain/g, 'an').replace(/ein/g, 'an').replace(/in/g, 'an');
+      p = p.replace(/on/g, 'o').replace(/an/g, 'a').replace(/en/g, 'a');
+      p = p.replace(/ch/g, 'sh').replace(/ph/g, 'f').replace(/qu/g, 'k');
+      p = p.replace(/c([eiy])/g, 's$1').replace(/g([eiy])/g, 'j$1');
+      p = p.replace(/gn/g, 'ni').replace(/ill/g, 'i').replace(/y/g, 'i');
+      p = p.replace(/(.)\1+/g, '$1');
+      return p;
+    }
+
+    function checkPronunciation(spokenText) {
+      if (currentWordIndex >= currentText.length || !isRunning) return;
+
+      const spokenWords = normalizeText(spokenText).split(/\s+/).filter(w => w.length > 0);
+      
+      console.log('Checking:', spokenWords);
+
+      spokenWords.forEach(spokenWord => {
+        if (currentWordIndex >= currentText.length || !isRunning) return;
+
+        let bestMatch = { index: currentWordIndex, similarity: 0 };
+        const lookahead = Math.min(3, currentText.length - currentWordIndex);
+        
+        for (let i = 0; i < lookahead; i++) {
+          const idx = currentWordIndex + i;
+          const expectedWord = normalizeText(currentText[idx]);
+          const sim = calculateSimilarity(spokenWord, expectedWord);
+          if (sim > bestMatch.similarity) {
+            bestMatch = { index: idx, similarity: sim };
+          }
+        }
+
+        for (let i = currentWordIndex; i < bestMatch.index; i++) {
+          const el = document.getElementById(`word-${i}`);
+          if (el && !el.classList.contains('correct') && !el.classList.contains('incorrect')) {
+            el.classList.remove('current');
+            el.classList.add('incorrect');
+            stats.incorrect++;
+            stats.total++;
+          }
+        }
+
+        currentWordIndex = bestMatch.index;
+        const currentEl = document.getElementById(`word-${currentWordIndex}`);
+        
+        if (!currentEl) return;
+
+        if (bestMatch.similarity >= 0.65) {
+          currentEl.classList.remove('current', 'incorrect');
+          currentEl.classList.add('correct');
+          stats.correct++;
+          console.log(`✓ ${spokenWord} = ${normalizeText(currentText[currentWordIndex])} (${Math.round(bestMatch.similarity * 100)}%)`);
+        } else {
+          currentEl.classList.remove('current');
+          currentEl.classList.add('incorrect');
+          stats.incorrect++;
+          console.log(`✗ ${spokenWord} ≠ ${normalizeText(currentText[currentWordIndex])} (${Math.round(bestMatch.similarity * 100)}%)`);
+        }
+
+        stats.total++;
+        currentWordIndex++;
+
+        if (currentWordIndex < currentText.length) {
+          const next = document.getElementById(`word-${currentWordIndex}`);
+          if (next) next.classList.add('current');
+        } else {
+          stopExercise();
+        }
+
+        updateStats();
+      });
+    }
+
+    function calculateSimilarity(w1, w2) {
+      if (w1 === w2) return 1;
+      
+      const special = {
+        'un': ['1', 'une'], 'deux': ['2'], 'trois': ['3'],
+        'est': ['et', 'ai', 'es'], 'sont': ['son'],
+        'jai': ['je', 'j'], 'suis': ['sui'],
+        'vous': ['vou'], 'nous': ['nou']
+      };
+
+      if (special[w2]?.includes(w1) || special[w1]?.includes(w2)) return 1;
+
+      const p1 = toPhonetic(w1);
+      const p2 = toPhonetic(w2);
+      
+      if (p1 === p2) return 0.95;
+
+      const longer = w1.length > w2.length ? w1 : w2;
+      const textDist = levenshteinDistance(w1, w2);
+      const phoneDist = levenshteinDistance(p1, p2);
+      
+      const textSim = (longer.length - textDist) / longer.length;
+      const phoneSim = (Math.max(p1.length, p2.length) - phoneDist) / Math.max(p1.length, p2.length);
+      
+      return Math.max(textSim, phoneSim * 0.95);
+    }
+
+    function levenshteinDistance(s1, s2) {
+      const m = [];
+      for (let i = 0; i <= s2.length; i++) m[i] = [i];
+      for (let j = 0; j <= s1.length; j++) m[0][j] = j;
+      
+      for (let i = 1; i <= s2.length; i++) {
+        for (let j = 1; j <= s1.length; j++) {
+          m[i][j] = s2[i-1] === s1[j-1] ? m[i-1][j-1] : 
+            Math.min(m[i-1][j-1] + 1, m[i][j-1] + 1, m[i-1][j] + 1);
+        }
+      }
+      return m[s2.length][s1.length];
+    }
+
+    function loadRandomText() {
+      const text = frenchTexts[Math.floor(Math.random() * frenchTexts.length)];
+      currentText = text.text.split(/\s+/);
+      currentWordIndex = 0;
+      
+      textContent.innerHTML = '';
+      currentText.forEach((word, i) => {
+        const span = document.createElement('span');
+        span.className = 'word';
+        span.id = `word-${i}`;
+        span.textContent = word + ' ';
+        textContent.appendChild(span);
+      });
+
+      if (currentText.length > 0) {
+        document.getElementById('word-0').classList.add('current');
+      }
+
+      textContent.classList.remove('scrolling');
+      void textContent.offsetHeight;
+    }
+
+    async function startExercise() {
+      if (isRunning) return;
+
+      isRunning = true;
+      timeRemaining = 60;
+      stats = { correct: 0, incorrect: 0, total: 0 };
+      currentWordIndex = 0;
+
+      document.querySelectorAll('.word').forEach(w => {
+        w.classList.remove('correct', 'incorrect', 'current');
+      });
+
+      if (currentText.length > 0) {
+        document.getElementById('word-0').classList.add('current');
+      }
+
+      updateStats();
+      startBtn.disabled = true;
+      textContent.classList.add('scrolling');
+      apiStatus.classList.add('active');
+      apiStatus.textContent = '🟢 Listening...';
+      
+      startTimer();
+      startRecording();
+      showNotification('🎤 Parlez clairement!');
+    }
+
+    function startTimer() {
+      const startTime = Date.now();
+      const duration = 60000;
+      
+      timerInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, duration - elapsed);
+        timeRemaining = Math.ceil(remaining / 1000);
+        
+        const m = Math.floor(timeRemaining / 60);
+        const s = timeRemaining % 60;
+        timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+
+        if (remaining <= 0) {
+          clearInterval(timerInterval);
+          stopExercise();
+        }
+      }, 100);
+    }
+
+    function stopExercise() {
+      isRunning = false;
+      clearInterval(timerInterval);
+      
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+      
+      startBtn.disabled = false;
+      textContent.classList.remove('scrolling');
+      apiStatus.classList.remove('active');
+      apiStatus.textContent = '🤖 OpenAI Whisper Ready';
+      recordingIndicator.classList.remove('active');
+      
+      const acc = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+      showNotification(`✅ Terminé! Précision: ${acc}%`);
+    }
+
+    function resetExercise() {
+      stopExercise();
+      stats = { correct: 0, incorrect: 0, total: 0 };
+      timeRemaining = 60;
+      timerDisplay.textContent = '1:00';
+      updateStats();
+      loadRandomText();
+    }
+
+    function updateStats() {
+      const acc = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+      accuracyDisplay.textContent = `${acc}%`;
+      correctDisplay.textContent = stats.correct;
+      incorrectDisplay.textContent = stats.incorrect;
+      totalDisplay.textContent = stats.total;
+    }
+
+    startBtn.addEventListener('click', startExercise);
+    resetBtn.addEventListener('click', resetExercise);
+
+    loadRandomText();
+    console.log('✓ French Pronunciation Checker ready!');
+  </script>
+</body>
+</html>
