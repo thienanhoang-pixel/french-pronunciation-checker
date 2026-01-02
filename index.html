@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Luyện Phát Âm (Avec Ann)</title>
   <link rel="icon" href="favicon.png" type="image/png">
+  
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -12,7 +13,6 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      /* Đảm bảo file ảnh tên là bg.jpg */
       background: url('bg.jpg') no-repeat center center fixed; 
       background-size: cover;
       display: flex; flex-direction: column; overflow: hidden; color: #fff;
@@ -162,7 +162,7 @@
 
   <script>
     // ==========================================
-    // THƯ VIỆN BÀI ĐỌC (10 BÀI DÀI)
+    // THƯ VIỆN BÀI ĐỌC
     // ==========================================
     const readingLibrary = [
       {
@@ -213,9 +213,10 @@
     let currentIdx = 0;
     let mediaRecorder;
     let fullTranscript = "";
-    let timerInterval, recordingInterval;
+    let timerInterval;
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
+    let streamReference = null;
     
     // DOM Elements
     const contentWrapper = document.getElementById('content-wrapper');
@@ -231,7 +232,6 @@
     // Load bài đọc
     function loadText(index) {
       const data = readingLibrary[index];
-      // Chỉ hiện tên Topic
       topicDisplay.textContent = data.topic;
       
       const words = data.text.trim().split(/\s+/);
@@ -260,7 +260,6 @@
 
     // Nút Bắt đầu
     mainBtn.addEventListener('click', async () => {
-      // Nếu nút đang ở chế độ "Làm lại" -> Reset bài hiện tại
       if (mainBtn.classList.contains('btn-retry')) {
         loadText(currentIdx);
         return;
@@ -268,18 +267,20 @@
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamReference = stream;
         startSession(stream);
       } catch (err) {
         alert("Lỗi Micro: " + err.message);
       }
     });
 
-    // Nút Bài khác (RANDOM)
+    // Nút Bài khác
     nextBtn.addEventListener('click', () => {
-      clearInterval(timerInterval);
-      clearInterval(recordingInterval);
-      if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-      
+      forceStop();
+      randomizeLesson();
+    });
+
+    function randomizeLesson() {
       let newIdx;
       do {
         newIdx = Math.floor(Math.random() * readingLibrary.length);
@@ -287,7 +288,13 @@
       
       currentIdx = newIdx;
       loadText(currentIdx);
-    });
+    }
+
+    function forceStop() {
+       clearInterval(timerInterval);
+       if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+       if(streamReference) streamReference.getTracks().forEach(track => track.stop());
+    }
 
     function startSession(stream) {
       mainBtn.disabled = true;
@@ -296,22 +303,21 @@
 
       fullTranscript = "";
       
+      // FIX LỖI 2: Dùng timeslice 3000 để gửi dữ liệu liên tục KHÔNG STOP RECORDER
       mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) sendToIBM(e.data);
       };
 
-      mediaRecorder.start();
-      recordingInterval = setInterval(() => {
-        if(mediaRecorder.state === 'recording') {
-          mediaRecorder.stop();
-          mediaRecorder.start();
-        }
-      }, 3000);
+      // Bắt đầu ghi âm, cứ 3000ms (3s) nó sẽ bắn sự kiện dataavailable 1 lần
+      mediaRecorder.start(3000); 
 
       timerInterval = setInterval(() => {
         timeLeft--;
         timerDisplay.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
+        
+        // CHỈ DỪNG KHI HẾT GIỜ
         if (timeLeft <= 0) finishSession();
       }, 1000);
     }
@@ -327,12 +333,23 @@
     }
 
     function finishSession() {
+      // Dừng đếm giờ
       clearInterval(timerInterval);
-      clearInterval(recordingInterval);
-      if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+      
+      // Dừng ghi âm
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      
+      // Tắt mic
+      if(streamReference) {
+        streamReference.getTracks().forEach(track => track.stop());
+      }
       
       mainBtn.textContent = "Đang chấm điểm...";
-      setTimeout(calculateResult, 2000); 
+      
+      // Đợi thêm chút để API trả về chunk cuối cùng
+      setTimeout(calculateResult, 2500); 
     }
 
     function calculateResult() {
@@ -342,6 +359,7 @@
 
       domWords.forEach(span => {
         const original = span.dataset.clean;
+        // Logic check đơn giản (có thể cải thiện sau)
         if (original && allSpokenWords.includes(original)) {
           span.classList.add('correct');
           correctCount++;
@@ -374,12 +392,13 @@
 
     function closeResult() {
       resultModal.style.display = 'none';
-      // Bật chế độ review để hiện thanh cuộn
       textDisplayArea.classList.add('review-mode');
     }
 
-    // Init bài đầu tiên
-    loadText(0);
+    // FIX LỖI 1: Random ngay khi mở web
+    window.onload = function() {
+        randomizeLesson();
+    };
   </script>
 </body>
 </html>
