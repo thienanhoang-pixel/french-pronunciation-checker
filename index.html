@@ -47,7 +47,6 @@
       max-width: 900px; width: 100%; margin: 0 auto; min-height: 0;
     }
 
-    /* KHUNG HIỂN THỊ VĂN BẢN */
     .text-display-wrapper {
       flex: 1; background: rgba(255, 255, 255, 0.95);
       border-radius: 16px; 
@@ -85,8 +84,9 @@
       display: inline-block; font-size: 24px; line-height: 1.8;
       padding: 0 2px; border-radius: 4px; color: #333; margin-right: 4px;
     }
+    /* Chỉnh lại màu sai cho dễ nhìn hơn */
     .word.correct { background-color: #48bb78; color: #fff; border-bottom: 2px solid #2f855a; }
-    .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.6; }
+    .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.5; }
 
     .controls {
       display: flex; gap: 15px; align-items: center; justify-content: center;
@@ -116,7 +116,6 @@
     .result-score { font-size: 60px; font-weight: 900; margin: 15px 0; }
     .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; color: #333; }
     
-    /* Giao diện modal theo kết quả */
     .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 30px #48bb78; }
     .french-mode .result-score { color: #48bb78; }
     .french-mode .result-msg { color: #2f855a; }
@@ -132,6 +131,12 @@
       background: #333; color: #fff; padding: 4px 10px; 
       border-radius: 4px; font-size: 12px; z-index: 10;
       text-transform: uppercase; letter-spacing: 1px;
+    }
+    /* Debug box nhỏ để bạn biết hệ thống đang nghe gì */
+    #debugInfo {
+        position: fixed; bottom: 5px; left: 5px; 
+        font-size: 10px; color: rgba(255,255,255,0.5); 
+        max-width: 300px; z-index: 2001; pointer-events: none;
     }
   </style>
 </head>
@@ -160,6 +165,8 @@
       </div>
     </main>
   </div>
+  
+  <div id="debugInfo"></div>
 
   <div class="result-modal" id="resultModal">
     <div class="result-box">
@@ -172,7 +179,7 @@
 
   <script>
     // ==========================================
-    // THƯ VIỆN BÀI ĐỌC
+    // 10 BÀI ĐỌC DÀI (CHUẨN)
     // ==========================================
     const readingLibrary = [
       { topic: "Khám phá Paris", text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles." },
@@ -188,22 +195,20 @@
     ];
 
     // ==========================================
-    // LOGIC HỆ THỐNG (V4 - FIX RACE CONDITIONS)
+    // LOGIC HỆ THỐNG (FIXED MATCHING & RESET)
     // ==========================================
     let currentIdx = 0;
     let mediaRecorder = null;
     let fullTranscript = "";
     
-    // Biến quản lý trạng thái
+    // Biến quản lý Interval
     let timerInterval = null;
     let chunkInterval = null;
-    let resultTimeout = null; // QUAN TRỌNG: Quản lý timeout chờ kết quả
+    let resultTimeout = null;
     
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
     let streamReference = null;
-    
-    // Session ID để tránh nhận kết quả của phiên cũ
     let currentSessionId = 0;
     
     // DOM Elements
@@ -216,36 +221,38 @@
     const resultModal = document.getElementById('resultModal');
     const modalScore = document.getElementById('modalScore');
     const modalMsg = document.getElementById('modalMsg');
+    const debugInfo = document.getElementById('debugInfo');
 
-    // HÀM DỌN DẸP SẠCH SẼ MỌI THỨ
-    function forceStop() {
-       // 1. Dừng các bộ đếm
+    // --- HÀM NUCLEAR RESET (XÓA SẠCH SẼ) ---
+    function nuclearReset() {
+       // 1. Dừng mọi đồng hồ
        if (timerInterval) clearInterval(timerInterval);
        if (chunkInterval) clearInterval(chunkInterval);
-       if (resultTimeout) clearTimeout(resultTimeout); // Hủy lệnh chấm điểm đang chờ
+       if (resultTimeout) clearTimeout(resultTimeout);
        
        timerInterval = null;
        chunkInterval = null;
        resultTimeout = null;
        
-       // 2. Tăng Session ID để vô hiệu hóa mọi dữ liệu cũ đang trên đường về
-       currentSessionId++; 
+       // 2. Tăng ID phiên để chặn dữ liệu cũ
+       currentSessionId = Date.now(); 
        
-       // 3. Reset transcript
+       // 3. Xóa transcript
        fullTranscript = "";
+       debugInfo.textContent = "";
        
-       // 4. Dừng ghi âm và stream
+       // 4. Dừng Mic
        if(mediaRecorder && mediaRecorder.state !== 'inactive') {
          try { mediaRecorder.stop(); } catch(e){}
        }
-       mediaRecorder = null; // Hủy biến
+       mediaRecorder = null;
        
        if(streamReference) {
          try { streamReference.getTracks().forEach(track => track.stop()); } catch(e){}
          streamReference = null;
        }
        
-       // 5. Reset giao diện
+       // 5. Reset UI
        mainBtn.disabled = false;
        mainBtn.textContent = "Démarrer (Bắt đầu)";
        mainBtn.classList.remove('btn-retry');
@@ -254,7 +261,7 @@
     }
 
     function loadText(index) {
-      forceStop(); // Gọi hàm dọn dẹp trước khi làm bất cứ thứ gì
+      nuclearReset(); // Reset trước
       
       const data = readingLibrary[index];
       topicDisplay.textContent = data.topic;
@@ -268,7 +275,7 @@
         contentWrapper.appendChild(span);
       });
       
-      textDisplayArea.className = 'text-display'; // Xóa chế độ review
+      textDisplayArea.className = 'text-display';
       contentWrapper.className = '';
       timerDisplay.textContent = "01:00";
       timeLeft = TIME_LIMIT;
@@ -278,8 +285,9 @@
       return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s+/g, "");
     }
 
+    // --- XỬ LÝ NÚT BẤM ---
     mainBtn.addEventListener('click', async () => {
-      // Logic nút Làm lại: Chỉ reset giao diện, user phải bấm Start lần nữa
+      // Nút làm lại -> Reset và load lại bài cũ
       if (mainBtn.classList.contains('btn-retry')) {
         loadText(currentIdx);
         return; 
@@ -290,12 +298,12 @@
         streamReference = stream;
         startSession(stream);
       } catch (err) {
-        alert("Lỗi Micro: " + err.message + "\nVui lòng cho phép quyền truy cập Micro hoặc thử trình duyệt khác.");
+        alert("Lỗi Micro: " + err.message);
       }
     });
 
     nextBtn.addEventListener('click', () => {
-      forceStop(); 
+      nuclearReset();
       randomizeLesson();
     });
 
@@ -308,15 +316,14 @@
     }
 
     function startSession(stream) {
-      currentSessionId = Date.now(); // Tạo ID phiên mới
+      // Không cần tăng sessionId ở đây nữa vì nuclearReset đã làm rồi
+      const sessionForThisRecorder = currentSessionId; 
       
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang nghe...";
       contentWrapper.classList.add('scrolling');
-      fullTranscript = ""; // Reset lần nữa cho chắc
       
       mediaRecorder = new MediaRecorder(stream);
-      const sessionForThisRecorder = currentSessionId; 
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) sendToIBM(e.data, sessionForThisRecorder);
@@ -324,11 +331,11 @@
 
       mediaRecorder.start();
 
-      // Cắt file 4s (Fix cho Cốc Cốc)
+      // Chunking 4s
       chunkInterval = setInterval(() => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
-            // Chỉ start lại nếu còn thời gian và ID phiên vẫn đúng
+            // Start lại nếu đúng phiên và còn giờ
             if (timeLeft > 0 && currentSessionId === sessionForThisRecorder) {
                 mediaRecorder.start();
             }
@@ -346,27 +353,26 @@
     }
 
     async function sendToIBM(blob, sessionId) {
-      // Nếu ID phiên không khớp (nghĩa là user đã bấm Next/Retry), thì vứt bỏ
-      if (sessionId !== currentSessionId) return;
-
+      if (sessionId !== currentSessionId) return; // Bỏ qua dữ liệu cũ
       if (blob.size < 1000) return;
+
       const formData = new FormData();
       formData.append('audio', blob, 'chunk.webm');
       try {
         const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
         const data = await res.json();
         
-        if (sessionId !== currentSessionId) return;
+        if (sessionId !== currentSessionId) return; // Check lại lần nữa
 
         if (data.text) {
-            console.log(`Phiên ${sessionId} nghe được:`, data.text);
+            console.log(`Nghe được: ${data.text}`);
             fullTranscript += " " + data.text;
+            debugInfo.textContent = "Listening: " + fullTranscript.substring(Math.max(0, fullTranscript.length - 50));
         }
       } catch (e) { console.error(e); }
     }
 
     function finishSession() {
-      // Dừng hết các interval
       if (timerInterval) clearInterval(timerInterval);
       if (chunkInterval) clearInterval(chunkInterval);
       
@@ -375,42 +381,45 @@
       
       mainBtn.textContent = "Đang chấm điểm...";
       
-      // Đợi 2.5s để IBM trả về nốt các chunk cuối, gán vào biến global resultTimeout
-      // để có thể clear nó nếu user bấm "Làm lại" ngay lập tức
+      // Đợi 3s để gom kết quả
       resultTimeout = setTimeout(() => {
-          try {
+          // Kiểm tra lần cuối xem phiên có bị reset trong lúc chờ không
+          if(mainBtn.textContent === "Đang chấm điểm...") {
               calculateResult();
-          } catch (e) {
-              console.error("Lỗi khi chấm điểm:", e);
-              alert("Có lỗi khi tính điểm. Vui lòng thử lại.");
-              // Vẫn hiện modal để không bị treo
-              modalScore.textContent = "Error";
-              resultModal.className = 'result-modal active';
-              mainBtn.disabled = false;
           }
-      }, 2500); 
+      }, 3000); 
     }
 
+    // --- LOGIC CHẤM ĐIỂM MỚI (FIX LỖI XANH LUNG TUNG) ---
     function calculateResult() {
-      // Chắc chắn rằng modal sẽ hiện ra
-      const allSpokenWords = fullTranscript.toLowerCase();
+      // 1. Tách chuỗi nghe được thành mảng từ
+      const spokenWordsArray = fullTranscript.toLowerCase().split(/\s+/).map(w => normalizeWord(w));
       const domWords = document.querySelectorAll('.word');
       let correctCount = 0;
 
+      // 2. Duyệt qua từng từ trong bài đọc
       domWords.forEach(span => {
-        const original = span.dataset.clean;
-        // Logic tô màu
-        if (original && allSpokenWords.includes(original)) {
+        const targetWord = span.dataset.clean;
+        
+        // Tìm xem từ này có trong danh sách đã nói không
+        const foundIndex = spokenWordsArray.indexOf(targetWord);
+
+        if (foundIndex !== -1) {
+          // NẾU CÓ:
           span.classList.add('correct');
           correctCount++;
+          // QUAN TRỌNG: Xóa từ đã dùng khỏi mảng spokenWordsArray
+          // Để nó không được dùng lại cho các từ giống hệt ở phía sau
+          spokenWordsArray.splice(foundIndex, 1);
         } else {
+          // NẾU KHÔNG:
           span.classList.add('wrong');
         }
       });
 
-      const score = Math.round((correctCount / domWords.length) * 100) || 0; // Tránh NaN
+      const score = Math.round((correctCount / domWords.length) * 100) || 0;
 
-      // --- HIỂN THỊ KẾT QUẢ ---
+      // Hiển thị Popup
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
       
@@ -423,7 +432,7 @@
       }
       modalScore.textContent = `${score}%`;
 
-      // Reset nút bấm
+      // Đổi trạng thái nút
       mainBtn.disabled = false;
       mainBtn.textContent = "🔄 Làm lại";
       mainBtn.classList.add('btn-retry');
@@ -435,7 +444,7 @@
       textDisplayArea.classList.add('review-mode');
     }
 
-    // Init bài đầu tiên
+    // Init
     window.onload = function() { randomizeLesson(); };
   </script>
 </body>
