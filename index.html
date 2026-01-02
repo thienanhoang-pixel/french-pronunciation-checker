@@ -118,7 +118,7 @@
   <div class="app-container">
     <header class="header">
       <h1>🇫🇷 Corriger La Prononciation Avec Ann 🇫🇷</h1>
-      <div class="slogan">🤵 Bạn là người Pháp hay là con gà e? 🐔</div>
+      <div class="slogan">🤵 Bạn là người Pháp hay là con gàe? 🐔</div>
     </header>
 
     <main class="main-content">
@@ -182,6 +182,7 @@
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
     let streamReference = null;
+    let pendingRequests = 0; // ✅ Đếm số request đang chờ IBM trả về
     
     const contentWrapper = document.getElementById('content-wrapper');
     const textDisplayArea = document.getElementById('textDisplayArea');
@@ -223,7 +224,9 @@
       mainBtn.className = "btn btn-main";
       timeLeft = TIME_LIMIT;
       debugInfo.style.display = 'none';
+      debugInfo.style.color = '#0f0'; // ✅ Reset màu debug
       fullTranscript = "";
+      pendingRequests = 0; // ✅ Reset pending requests
     }
 
     mainBtn.addEventListener('click', async () => {
@@ -288,18 +291,36 @@
     }
 
     async function sendToIBM(blob) {
+      pendingRequests++; // ✅ Tăng số request đang chờ
       const formData = new FormData();
       formData.append('audio', blob, 'chunk.webm');
+      
       try {
         const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+        
+        if (!res.ok) {
+          throw new Error(`IBM API lỗi: ${res.status}`);
+        }
+        
         const data = await res.json();
-        if (data.text) {
+        
+        // ✅ Kiểm tra IBM có trả về lỗi không
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        if (data.text && data.text.trim().length > 0) {
           fullTranscript += " " + data.text;
-          debugInfo.textContent = `🎤 IBM nghe được: "${data.text}"\n📊 Tổng: ${fullTranscript.trim().split(/\s+/).length} từ`;
+          const wordCount = fullTranscript.trim().split(/\s+/).filter(w => w.length > 1).length;
+          debugInfo.textContent = `🎤 IBM đang nghe...\n✅ Đã nhận diện: ${wordCount} từ\n📝 Gần nhất: "${data.text.trim()}"`;
+          console.log("✅ IBM transcript:", data.text);
         }
       } catch (e) { 
-        console.error(e);
-        debugInfo.textContent = `❌ Lỗi: ${e.message}`;
+        console.error('❌ Lỗi gọi IBM:', e);
+        debugInfo.textContent = `❌ LỖI IBM: ${e.message}\n\n⚠️ Kiểm tra:\n1. Đã set IBM_API_KEY trong Vercel?\n2. Đã set IBM_URL trong Vercel?\n3. Xem Console (F12) để biết chi tiết`;
+        debugInfo.style.color = '#ff4444';
+      } finally {
+        pendingRequests--; // ✅ Giảm số request đang chờ
       }
     }
 
@@ -314,14 +335,35 @@
         streamReference.getTracks().forEach(track => track.stop());
       }
       
-      mainBtn.textContent = "Đang chấm điểm...";
-      debugInfo.textContent = '⏳ Đang phân tích...';
+      mainBtn.textContent = "Đợi IBM xử lý...";
+      debugInfo.textContent = '⏳ Đang đợi IBM Cloud xử lý xong...';
       
-      setTimeout(calculateResult, 2500);
+      // ✅ Đợi tất cả request IBM trả về (tối đa 5 giây)
+      const checkAndCalculate = () => {
+        if (pendingRequests === 0) {
+          calculateResult();
+        } else {
+          debugInfo.textContent = `⏳ Còn ${pendingRequests} chunk đang xử lý...`;
+          setTimeout(checkAndCalculate, 500);
+        }
+      };
+      
+      setTimeout(checkAndCalculate, 1000); // Đợi 1s cho chunk cuối cùng
     }
 
     // ✅ LOGIC ĐƠN GIẢN: IBM nghe được = XANH, không nghe được = ĐỎ
     function calculateResult() {
+      mainBtn.textContent = "Đang chấm điểm...";
+      
+      // ✅ KIỂM TRA: Nếu IBM không trả về gì → Báo lỗi
+      if (!fullTranscript || fullTranscript.trim().length === 0) {
+        alert("⚠️ LỖI: IBM Cloud không nghe được gì!\n\nNguyên nhân có thể:\n1. Chưa set IBM_API_KEY trong Vercel\n2. Chưa set IBM_URL trong Vercel\n3. Micro không hoạt động\n4. Không có âm thanh\n\nVui lòng kiểm tra Console (F12) để biết chi tiết.");
+        mainBtn.disabled = false;
+        mainBtn.textContent = "🔄 Thử lại";
+        mainBtn.classList.add('btn-retry');
+        return;
+      }
+      
       const spokenWords = fullTranscript.toLowerCase()
         .split(/\s+/)
         .map(w => w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()«»""'']/g, ''))
@@ -330,7 +372,11 @@
       const domWords = document.querySelectorAll('.word');
       let correctCount = 0;
 
-      debugInfo.textContent = `🔍 So sánh:\n📝 Text gốc: ${domWords.length} từ\n🎤 IBM nghe được: ${spokenWords.length} từ\n\n📋 Chi tiết: ${spokenWords.join(', ')}`;
+      console.log("📊 Chấm điểm:");
+      console.log("- Text gốc:", domWords.length, "từ");
+      console.log("- IBM nghe được:", spokenWords);
+      
+      debugInfo.textContent = `🔍 Đang so sánh...\n📝 Text gốc: ${domWords.length} từ\n🎤 IBM nghe được: ${spokenWords.length} từ`;
 
       domWords.forEach(span => {
         const original = span.dataset.clean;
@@ -346,6 +392,8 @@
       });
 
       const score = Math.round((correctCount / domWords.length) * 100);
+      
+      console.log("✅ Kết quả:", correctCount, "/", domWords.length, "=", score + "%");
 
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
@@ -355,7 +403,7 @@
         modalMsg.innerHTML = "Chúc mừng!<br>Bạn là người Pháp 🇫🇷🍷";
       } else {
         resultModal.classList.add('chicken-mode');
-        modalMsg.innerHTML = "Chia buồn!<br>Bạn là con gà e 🐔🤣";
+        modalMsg.innerHTML = "Chia buồn!<br>Bạn là con gàe 🐔🤣";
       }
       modalScore.textContent = `${score}%`;
 
@@ -364,7 +412,7 @@
       mainBtn.classList.add('btn-retry');
       mainBtn.classList.remove('btn-main');
       
-      debugInfo.textContent = `✅ Kết quả:\n🟢 Phát âm đúng: ${correctCount}/${domWords.length}\n🔴 Chưa đúng: ${domWords.length - correctCount}`;
+      debugInfo.textContent = `✅ Kết quả:\n🟢 Phát âm đúng: ${correctCount}/${domWords.length}\n🔴 Chưa đúng: ${domWords.length - correctCount}\n\n📊 Chi tiết IBM nghe được:\n${spokenWords.slice(0, 20).join(', ')}${spokenWords.length > 20 ? '...' : ''}`;
     }
 
     function closeResult() {
