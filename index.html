@@ -359,7 +359,7 @@
       mediaRecorder = new MediaRecorder(stream);
 
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) sendToIBM(e.data, sessionForThisRecorder);
+        if (e.data.size > 0) sendToOpenAI(e.data, sessionForThisRecorder);
       };
 
       // Xử lý khi MediaRecorder dừng để restart an toàn
@@ -423,7 +423,7 @@
       }, 1000);
     }
 
-    async function sendToIBM(blob, sessionId) {
+    async function sendToOpenAI(blob, sessionId) {
       if (sessionId !== currentSessionId) return;
       if (blob.size < 1000) return;
 

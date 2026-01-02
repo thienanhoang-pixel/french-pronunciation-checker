@@ -1,7 +1,6 @@
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
-import SpeechToTextV1 from 'ibm-watson/speech-to-text/v1.js';
-import { IamAuthenticator } from 'ibm-watson/auth/index.js';
+import OpenAI from 'openai';
 
 export const config = {
   api: {
@@ -14,19 +13,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // 1. LẤY KEY CHUẨN TỪ VERCEL (Theo tên trong file credentials của IBM)
-  const API_KEY = process.env.SPEECH_TO_TEXT_APIKEY; 
-  const SERVICE_URL = process.env.SPEECH_TO_TEXT_URL;
+  // 1. LẤY API KEY TỪ VERCEL ENVIRONMENT VARIABLES
+  const API_KEY = process.env.OPENAI_API_KEY;
   
   // Debug log để bạn xem trên Vercel nó có nhận Key không
   console.log('Checking Credentials...');
-  if (!API_KEY || !SERVICE_URL) {
-    console.error('❌ LỖI: Chưa cài đặt SPEECH_TO_TEXT_APIKEY hoặc SPEECH_TO_TEXT_URL trong Vercel!');
+  if (!API_KEY) {
+    console.error('❌ LỖI: Chưa cài đặt OPENAI_API_KEY trong Vercel Environment Variables!');
     return res.status(500).json({ 
-      error: 'Missing Credentials. Please check Vercel Environment Variables.' 
+      error: 'Missing OPENAI_API_KEY. Please check Vercel Environment Variables.' 
     });
   }
-  console.log('✅ Đã tìm thấy API Key và URL.');
+  console.log('✅ Đã tìm thấy OpenAI API Key.');
 
   try {
     const data = await new Promise((resolve, reject) => {
@@ -42,37 +40,32 @@ export default async function handler(req, res) {
 
     const filePath = Array.isArray(file) ? file[0].filepath : file.filepath;
     
-    // 2. KHỞI TẠO IBM
-    const speechToText = new SpeechToTextV1({
-      authenticator: new IamAuthenticator({
-        apikey: API_KEY,
-      }),
-      serviceUrl: SERVICE_URL,
+    // 2. KHỞI TẠO OPENAI CLIENT
+    const openai = new OpenAI({
+      apiKey: API_KEY,
     });
 
-    // 3. QUAN TRỌNG: FIX LỖI "UNABLE TO TRANSCODE"
-    // Chỉ khai báo audio/webm, không thêm codecs=opus để tránh IBM bắt bẻ
-    const params = {
-      audio: fs.createReadStream(filePath),
-      contentType: 'audio/webm', 
-      model: 'fr-FR_BroadbandModel',
-      smartFormatting: true,
-    };
+    console.log(`📤 Đang gửi file lên OpenAI Whisper...`);
 
-    console.log(`📤 Đang gửi file lên IBM...`);
-
-    const { result } = await speechToText.recognize(params);
+    // 3. GỌI OPENAI WHISPER API
+    // Whisper hỗ trợ nhiều format audio, bao gồm webm
+    const transcription = await openai.audio.transcriptions.create({
+      file: fs.createReadStream(filePath),
+      model: 'whisper-1',
+      language: 'fr', // Ngôn ngữ tiếng Pháp
+      response_format: 'text', // Trả về plain text
+    });
     
-    const transcripts = result.results
-      .map(r => r.alternatives[0].transcript)
-      .join(' ')
-      .trim();
+    // OpenAI trả về text trực tiếp khi dùng response_format: 'text'
+    const transcripts = typeof transcription === 'string' 
+      ? transcription.trim() 
+      : transcription.text?.trim() || '';
 
-    console.log('✅ Kết quả IBM:', transcripts);
+    console.log('✅ Kết quả OpenAI Whisper:', transcripts);
     return res.status(200).json({ text: transcripts || '' });
 
   } catch (error) {
-    console.error('❌ LỖI IBM:', error.message);
+    console.error('❌ LỖI OpenAI:', error.message);
     return res.status(500).json({ error: error.message });
   }
 }
