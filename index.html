@@ -114,16 +114,15 @@
       border: 4px solid #ccc;
     }
     .result-score { font-size: 60px; font-weight: 900; margin: 15px 0; }
-    /* Màu chữ thông báo kết quả */
     .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; color: #333; }
     
     .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 30px #48bb78; }
     .french-mode .result-score { color: #48bb78; }
-    .french-mode .result-msg { color: #2f855a; } /* Chữ xanh lá đậm */
+    .french-mode .result-msg { color: #2f855a; }
     
     .chicken-mode .result-box { border-color: #ff4757; box-shadow: 0 0 30px #ff4757; }
     .chicken-mode .result-score { color: #ff4757; }
-    .chicken-mode .result-msg { color: #c53030; } /* Chữ đỏ đậm */
+    .chicken-mode .result-msg { color: #c53030; }
 
     .btn-close { background: #333; color: white; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin-top: 15px; }
     
@@ -172,7 +171,7 @@
 
   <script>
     // ==========================================
-    // THƯ VIỆN BÀI ĐỌC
+    // DATA
     // ==========================================
     const readingLibrary = [
       { topic: "Khám phá Paris", text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles." },
@@ -182,13 +181,13 @@
       { topic: "Giá trị của tình bạn", text: "On dit souvent que les amis sont la famille que l'on choisit. Une amitié véritable est l'une des choses les plus précieuses dans la vie d'une personne. Un vrai ami est quelqu'un qui est là pour vous dans les moments difficiles, qui vous écoute sans vous juger et qui partage vos joies comme vos peines. Avec le temps et la distance, il est parfois difficile de garder le contact, mais les liens forts résistent à tout. Ce n'est pas la quantité d'amis qui compte, mais la qualité. Avoir une personne sur qui compter, avec qui rire et pleurer, est un cadeau inestimable qui rend la vie beaucoup plus douce." },
       { topic: "Du lịch và trải nghiệm", text: "Voyager est la meilleure école de la vie. Quand on visite un pays étranger, on ne découvre pas seulement de nouveaux paysages, on découvre aussi une nouvelle façon de penser et de vivre. On apprend à sortir de sa zone de confort, à goûter des aliments inconnus et à essayer de parler une autre langue. Ces expériences nous rendent plus ouverts, plus tolérants et plus humbles. On réalise que malgré nos différences culturelles, les êtres humains partagent les mêmes rêves et les mêmes émotions partout sur la Terre. Le voyage nous change intérieurement et nous laisse des souvenirs gravés à jamais dans notre mémoire." },
       { topic: "Thể thao và sức khỏe", text: "Le sport joue un rôle essentiel pour maintenir une bonne santé physique et mentale. Pratiquer une activité physique régulière aide à réduire le stress, à améliorer le sommeil et à renforcer le cœur. Que ce soit la course à pied, la natation, le yoga ou le football, l'important est de bouger et de se faire plaisir. Le sport nous apprend aussi des valeurs importantes comme la discipline, le respect des règles et l'esprit d'équipe. Se dépasser, fixer des objectifs et voir ses progrès procure une grande satisfaction personnelle. Comme on dit souvent : un esprit sain dans un corps sain est la clé du bonheur." },
-      { topic: "Công nghệ và cuộc sống", text: "La technologie a transformé notre façon de vivre à une vitesse incroyable. Aujourd'hui, nous pouvons communiquer instantanément với des personnes à l'autre bout du monde, accéder à toute la connaissance humaine en un clic et travailler depuis n'importe où. Cependant, cette connexion permanente a aussi ses inconvénients. Nous passons parfois plus de temps à regarder nos téléphones qu'à parler aux gens qui sont en face de nous. Il est important de trouver un équilibre. La technologie doit rester un outil pour nous servir, et non un maître qui contrôle notre temps et notre attention. Savoir se déconnecter est devenu une compétence essentielle." },
+      { topic: "Công nghệ và cuộc sống", text: "La technologie a transformé notre façon de vivre à une vitesse incroyable. Aujourd'hui, nous pouvons communiquer instantanément avec des personnes à l'autre bout du monde, accéder à toute la connaissance humaine en un clic et travailler depuis n'importe où. Cependant, cette connexion permanente a aussi ses inconvénients. Nous passons parfois plus de temps à regarder nos téléphones qu'à parler aux gens qui sont en face de nous. Il est important de trouver un équilibre. La technologie doit rester un outil pour nous servir, et non un maître qui contrôle notre temps et notre attention. Savoir se déconnecter est devenu une compétence essentielle." },
       { topic: "Hạnh phúc từ điều giản đơn", text: "Beaucoup de gens cherchent le bonheur dans la richesse, la célébrité ou la réussite professionnelle. Pourtant, le vrai bonheur se cache souvent dans les choses simples de la vie quotidienne. C'est l'odeur de la pluie en été, le sourire d'un enfant, un repas partagé avec des proches ou une promenade tranquille dans la forêt. Savoir apprécier l'instant présent est un secret que nous oublions trop souvent. La gratitude est une clé puissante : être reconnaissant pour ce que l'on a, au lieu de toujours désirer ce que l'on n'a pas. Le bonheur n'est pas une destination à atteindre, c'est une manière de voyager chaque jour." },
       { topic: "Giấc mơ và nỗ lực", text: "Avoir des rêves est ce qui donne un sens à notre existence. Que ce soit devenir médecin, voyager autour du monde, écrire un livre ou simplement fonder une famille heureuse, nos rêves nous poussent à avancer. Mais rêver ne suffit pas, il faut aussi avoir le courage d'agir. Le chemin vers le succès est souvent rempli d'obstacles et d'échecs. Ce n'est pas grave de tomber, l'important est de se relever et de continuer à essayer. La persévérance et le travail acharné sont les clés de la réussite. Ne laissez jamais personne vous dire que vos rêves sont impossibles, car votre potentiel est infini." }
     ];
 
     // ==========================================
-    // LOGIC HỆ THỐNG
+    // LOGIC HỆ THỐNG (FIXED SESSION ID)
     // ==========================================
     let currentIdx = 0;
     let mediaRecorder = null;
@@ -198,7 +197,9 @@
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
     let streamReference = null;
-    let isProcessing = false;
+    
+    // 🔥 SESSION ID: Chìa khóa để sửa lỗi xung đột dữ liệu
+    let currentSessionId = 0;
     
     // DOM Elements
     const contentWrapper = document.getElementById('content-wrapper');
@@ -211,23 +212,25 @@
     const modalScore = document.getElementById('modalScore');
     const modalMsg = document.getElementById('modalMsg');
 
-    // Hàm Dừng khẩn cấp: Xóa mọi interval, stop ghi âm, reset biến
     function forceStop() {
        clearInterval(timerInterval);
        clearInterval(chunkInterval);
        timerInterval = null;
        chunkInterval = null;
-       isProcessing = false;
-       fullTranscript = ""; // QUAN TRỌNG: Xóa dữ liệu cũ khi đổi bài
+       
+       // Tăng SessionID để chặn mọi dữ liệu cũ đang trên đường về
+       currentSessionId++; 
        
        if(mediaRecorder && mediaRecorder.state !== 'inactive') {
          mediaRecorder.stop();
        }
+       // Dừng mic thật kỹ
        if(streamReference) {
          streamReference.getTracks().forEach(track => track.stop());
          streamReference = null;
        }
        
+       // Reset UI
        mainBtn.disabled = false;
        mainBtn.textContent = "Démarrer (Bắt đầu)";
        mainBtn.classList.remove('btn-retry');
@@ -236,7 +239,8 @@
     }
 
     function loadText(index) {
-      forceStop(); // Reset sạch sẽ trước khi load bài mới
+      forceStop(); // Reset toàn bộ
+      fullTranscript = ""; // Xóa chữ cũ
       
       const data = readingLibrary[index];
       topicDisplay.textContent = data.topic;
@@ -261,11 +265,9 @@
     }
 
     mainBtn.addEventListener('click', async () => {
-      // Nếu là nút "Làm lại" -> Reset ngay lập tức và load lại bài hiện tại
+      // Logic nút Làm lại: Chỉ reset giao diện, user phải bấm Start lần nữa
       if (mainBtn.classList.contains('btn-retry')) {
         loadText(currentIdx);
-        // Sau khi load xong, giả lập click start lần nữa nếu muốn, 
-        // nhưng tốt nhất để người dùng tự bấm start lại cho chuẩn bị.
         return; 
       }
       
@@ -274,12 +276,12 @@
         streamReference = stream;
         startSession(stream);
       } catch (err) {
-        alert("Lỗi Micro: " + err.message + "\nHãy thử dùng Chrome/Edge nếu Cốc Cốc bị lỗi.");
+        alert("Lỗi Micro: " + err.message + "\nVui lòng cho phép quyền truy cập Micro!");
       }
     });
 
     nextBtn.addEventListener('click', () => {
-      forceStop(); // Dừng ngay lập tức
+      forceStop(); 
       randomizeLesson();
     });
 
@@ -292,25 +294,29 @@
     }
 
     function startSession(stream) {
+      // Tạo ID phiên mới
+      currentSessionId = Date.now();
+      
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang nghe...";
       contentWrapper.classList.add('scrolling');
-      fullTranscript = ""; // Reset transcript lần nữa cho chắc
-      isProcessing = true;
-
+      fullTranscript = ""; // Reset chữ lần nữa
+      
       mediaRecorder = new MediaRecorder(stream);
+      const sessionForThisRecorder = currentSessionId; // Lưu ID cho recorder này
 
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) sendToIBM(e.data);
+        if (e.data.size > 0) sendToIBM(e.data, sessionForThisRecorder);
       };
 
       mediaRecorder.start();
 
-      // Cắt file mỗi 4 giây (Logic chuẩn cho Cốc Cốc)
+      // Cắt file 4s (Fix cho Cốc Cốc)
       chunkInterval = setInterval(() => {
         if (mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
-            if (timeLeft > 0 && isProcessing) {
+            // Chỉ start lại nếu còn thời gian và ID phiên vẫn đúng
+            if (timeLeft > 0 && currentSessionId === sessionForThisRecorder) {
                 mediaRecorder.start();
             }
         }
@@ -320,43 +326,48 @@
         timeLeft--;
         timerDisplay.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
         
-        // Hết giờ -> Dừng ngay
         if (timeLeft <= 0) {
             finishSession();
         }
       }, 1000);
     }
 
-    async function sendToIBM(blob) {
+    async function sendToIBM(blob, sessionId) {
+      // Nếu ID phiên không khớp (nghĩa là user đã bấm Next/Retry), thì vứt bỏ dữ liệu này
+      if (sessionId !== currentSessionId) return;
+
       if (blob.size < 1000) return;
       const formData = new FormData();
       formData.append('audio', blob, 'chunk.webm');
       try {
         const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
         const data = await res.json();
+        
+        // Kiểm tra lại lần nữa trước khi cộng chuỗi
+        if (sessionId !== currentSessionId) return;
+
         if (data.text) {
-            console.log("Nghe được:", data.text);
+            console.log(`Phiên ${sessionId} nghe được:`, data.text);
             fullTranscript += " " + data.text;
         }
       } catch (e) { console.error(e); }
     }
 
     function finishSession() {
-      // Dừng hết các đồng hồ
       clearInterval(timerInterval);
       clearInterval(chunkInterval);
-      isProcessing = false;
       
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
       if (streamReference) streamReference.getTracks().forEach(track => track.stop());
       
       mainBtn.textContent = "Đang chấm điểm...";
       
-      // Đợi 3s để IBM trả về nốt các chunk cuối
+      // Đợi 3s để các gói tin cuối cùng về đích
       setTimeout(calculateResult, 3000); 
     }
 
     function calculateResult() {
+      // Tại thời điểm này, fullTranscript đã chứa đủ dữ liệu của phiên hiện tại
       const allSpokenWords = fullTranscript.toLowerCase();
       const domWords = document.querySelectorAll('.word');
       let correctCount = 0;
@@ -373,21 +384,20 @@
 
       const score = Math.round((correctCount / domWords.length) * 100);
 
-      // --- LOGIC CÂU ĐÙA ĐÃ FIX ---
+      // --- HIỂN THỊ KẾT QUẢ ---
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
       
       if (score >= 50) {
         resultModal.classList.add('french-mode');
-        // Icon người Pháp + câu chúc
         modalMsg.innerHTML = "Chúc mừng, bạn là người Pháp 🇫🇷🍷";
       } else {
         resultModal.classList.add('chicken-mode');
-        // Icon con gà + câu trêu
         modalMsg.innerHTML = "Lêu lêu, bạn là con gàe 🐔🤣";
       }
       modalScore.textContent = `${score}%`;
 
+      // Reset nút bấm
       mainBtn.disabled = false;
       mainBtn.textContent = "🔄 Làm lại";
       mainBtn.classList.add('btn-retry');
