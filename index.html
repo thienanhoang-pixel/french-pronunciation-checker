@@ -274,10 +274,27 @@
 
       fullTranscript = "";
       
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      // ✅ Thử các format mà IBM hỗ trợ
+      let mimeType = 'audio/webm';
+      const types = [
+        'audio/webm;codecs=opus',
+        'audio/ogg;codecs=opus', 
+        'audio/webm',
+        ''
+      ];
+      
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          mimeType = type;
+          console.log('✅ Using MIME type:', mimeType);
+          break;
+        }
+      }
+      
+      mediaRecorder = new MediaRecorder(stream, { mimeType });
       
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) sendToIBM(e.data);
+        if (e.data.size > 0) sendToIBM(e.data, mimeType);
       };
 
       mediaRecorder.start(3000);
