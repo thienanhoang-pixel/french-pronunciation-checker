@@ -14,21 +14,18 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // ✅ KIỂM TRA API KEY - Hỗ trợ cả 2 format
+  // ✅ Hỗ trợ cả 2 format tên biến
   const IBM_API_KEY = process.env.SPEECH_TO_TEXT_APIKEY || process.env.IBM_API_KEY;
   const IBM_URL = process.env.SPEECH_TO_TEXT_URL || process.env.IBM_URL;
   
   if (!IBM_API_KEY || !IBM_URL) {
     console.error('❌ THIẾU IBM CREDENTIALS!');
-    console.error('SPEECH_TO_TEXT_APIKEY:', process.env.SPEECH_TO_TEXT_APIKEY ? 'Có' : 'THIẾU');
-    console.error('SPEECH_TO_TEXT_URL:', process.env.SPEECH_TO_TEXT_URL ? 'Có' : 'THIẾU');
     return res.status(500).json({ 
       error: 'IBM credentials not configured. Please set SPEECH_TO_TEXT_APIKEY and SPEECH_TO_TEXT_URL in Vercel.' 
     });
   }
 
   console.log('✅ IBM Credentials found');
-  console.log('🔗 IBM URL:', IBM_URL);
 
   try {
     // Nhận file audio
@@ -46,7 +43,12 @@ export default async function handler(req, res) {
     }
 
     const filePath = Array.isArray(audioFile) ? audioFile[0].filepath : audioFile.filepath;
-    console.log('📁 File path:', filePath);
+    const mimeType = data.fields.mimeType ? 
+      (Array.isArray(data.fields.mimeType) ? data.fields.mimeType[0] : data.fields.mimeType) : 
+      'audio/webm';
+
+    console.log('📁 File:', filePath);
+    console.log('🎵 MIME Type:', mimeType);
 
     // Khởi tạo IBM Watson
     const speechToText = new SpeechToTextV1({
@@ -56,32 +58,34 @@ export default async function handler(req, res) {
       serviceUrl: IBM_URL,
     });
 
-    console.log('🎤 Đang gửi audio đến IBM...');
+    console.log('🎤 Sending to IBM...');
 
-    // ✅ Thử với các config khác nhau
+    // ✅ Map MIME type to IBM content type
+    let contentType = 'audio/webm;codecs=opus';
+    if (mimeType.includes('ogg')) {
+      contentType = 'audio/ogg;codecs=opus';
+    } else if (mimeType.includes('webm')) {
+      contentType = 'audio/webm;codecs=opus';
+    }
+
     const params = {
       audio: fs.createReadStream(filePath),
-      contentType: 'audio/webm;codecs=opus', // Chính xác hơn cho WebM
+      contentType: contentType,
       model: 'fr-FR_BroadbandModel',
       
       // Lọc nhiễu
       backgroundAudioSuppression: 0.5,
       speechDetectorSensitivity: 0.4,
       
-      // Cải thiện độ chính xác
       smartFormatting: true,
       profanityFilter: false,
-      maxAlternatives: 1,
     };
 
-    console.log('📤 Params:', {
-      contentType: params.contentType,
-      model: params.model,
-    });
+    console.log('📤 Content-Type:', params.contentType);
 
     const { result } = await speechToText.recognize(params);
     
-    console.log('📥 IBM response:', JSON.stringify(result, null, 2));
+    console.log('📥 IBM response chunks:', result.results.length);
 
     // Lấy transcript
     const transcripts = result.results
@@ -90,37 +94,26 @@ export default async function handler(req, res) {
       .trim();
 
     console.log('✅ Transcript:', transcripts);
-    console.log('📊 Số chunks:', result.results.length);
 
-    if (!transcripts || transcripts.length === 0) {
-      console.log('⚠️ IBM không nghe được gì');
-      return res.status(200).json({ text: '' });
-    }
-
-    return res.status(200).json({ text: transcripts });
+    return res.status(200).json({ text: transcripts || '' });
 
   } catch (error) {
-    // ✅ Log chi tiết lỗi
-    console.error('❌ IBM ERROR:', error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error code:', error.code);
-    console.error('Error stack:', error.stack);
-    
-    // Nếu có response từ IBM
+    console.error('❌ ERROR:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      statusText: error.statusText
+    });
+
     if (error.body) {
-      console.error('IBM Response Body:', JSON.stringify(error.body, null, 2));
-    }
-    if (error.statusText) {
-      console.error('IBM Status Text:', error.statusText);
-    }
-    if (error.status) {
-      console.error('IBM Status Code:', error.status);
+      console.error('IBM Error Body:', JSON.stringify(error.body, null, 2));
     }
 
     return res.status(500).json({ 
       error: error.message || 'IBM Watson error',
-      details: error.body || error.statusText || 'No details available',
+      details: error.body?.error || error.statusText || 'No details',
       code: error.code || error.status || 'UNKNOWN'
     });
   }
