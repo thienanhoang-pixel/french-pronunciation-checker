@@ -22,6 +22,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // ✅ KIỂM TRA API KEY
+  if (!process.env.IBM_API_KEY || !process.env.IBM_URL) {
+    console.error('❌ THIẾU IBM CREDENTIALS!');
+    return res.status(500).json({ 
+      error: 'IBM credentials not configured. Please set IBM_API_KEY and IBM_URL in Vercel environment variables.' 
+    });
+  }
+
   try {
     const data = await new Promise((resolve, reject) => {
       const form = new IncomingForm();
@@ -61,19 +69,18 @@ export default async function handler(req, res) {
     // ✅ Lấy transcript và lọc tiếng ồn
     const transcripts = result.results
       .map(r => r.alternatives[0].transcript)
-      .join(' ');
+      .join(' ')
+      .trim();
 
-    console.log("🎤 IBM nghe được:", cleanedTranscript);
-    console.log("📊 Confidence scores:", result.results.map(r => r.alternatives[0].confidence));
+    console.log("🎤 IBM nghe được:", transcripts);
+    console.log("📊 Số chunks:", result.results.length);
 
-    return res.status(200).json({ 
-      text: cleanedTranscript,
-      // Trả thêm metadata để debug
-      _debug: {
-        rawResults: result.results.length,
-        avgConfidence: result.results.reduce((sum, r) => sum + r.alternatives[0].confidence, 0) / result.results.length
-      }
-    });
+    // ✅ Nếu IBM không nghe được gì, trả về chuỗi rỗng
+    if (!transcripts || transcripts.length === 0) {
+      console.log("⚠️ IBM không nghe được gì trong chunk này");
+    }
+
+    return res.status(200).json({ text: transcripts });
 
   } catch (error) {
     console.error('❌ Lỗi IBM:', error);
