@@ -58,21 +58,9 @@ export default async function handler(req, res) {
 
     const { result } = await speechToText.recognize(params);
 
-    // ✅ FIX 6: Chỉ lấy phần có confidence cao
+    // ✅ Lấy transcript và lọc tiếng ồn
     const transcripts = result.results
-      .filter(r => r.final === true) // Chỉ lấy kết quả cuối cùng (không phải tạm thời)
-      .map(r => {
-        const best = r.alternatives[0];
-        // Chỉ lấy những đoạn có confidence > 0.3 (tránh tiếng thở, ồn)
-        return best.confidence > 0.3 ? best.transcript : '';
-      })
-      .filter(t => t.trim().length > 0) // Loại bỏ chuỗi rỗng
-      .join(' ');
-
-    // ✅ FIX 7: Lọc thêm lần nữa - loại bỏ những từ ngắn lẻ loi (tiếng thở thường tạo ra)
-    const cleanedTranscript = transcripts
-      .split(' ')
-      .filter(word => word.length > 1) // Loại từ 1 chữ cái
+      .map(r => r.alternatives[0].transcript)
       .join(' ');
 
     console.log("🎤 IBM nghe được:", cleanedTranscript);
