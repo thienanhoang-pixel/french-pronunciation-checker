@@ -195,6 +195,14 @@
     // ==========================================
     // LOGIC HỆ THỐNG
     // ==========================================
+    
+    // TẠO UNIQUE SESSION ID CHO MỖI BROWSER/TAB (tránh conflict khi nhiều người dùng)
+    // Sử dụng crypto.randomUUID() nếu có, nếu không thì dùng timestamp + random
+    const UNIQUE_SESSION_PREFIX = typeof crypto !== 'undefined' && crypto.randomUUID 
+      ? crypto.randomUUID() 
+      : `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    let sessionCounter = 0;
+    
     let currentIdx = 0;
     let mediaRecorder = null;
     let fullTranscript = "";
@@ -207,7 +215,7 @@
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
     let streamReference = null;
-    let currentSessionId = 0;
+    let currentSessionId = `${UNIQUE_SESSION_PREFIX}-${++sessionCounter}`;
     
     // DOM Elements
     const contentWrapper = document.getElementById('content-wrapper');
@@ -239,8 +247,8 @@
        chunkInterval = null;
        resultTimeout = null;
        
-       // Tăng ID phiên để chặn dữ liệu cũ
-       currentSessionId = Date.now(); 
+       // Tạo ID phiên mới (unique cho mỗi browser/tab)
+       currentSessionId = `${UNIQUE_SESSION_PREFIX}-${++sessionCounter}`; 
        
        // Xóa transcript
        fullTranscript = "";
@@ -272,7 +280,13 @@
        mainBtn.textContent = "Démarrer (Bắt đầu)";
        mainBtn.classList.remove('btn-retry');
        mainBtn.classList.add('btn-main');
+       
+       // Reset animation và position của content-wrapper
        contentWrapper.classList.remove('scrolling');
+       // Quan trọng: Reset về vị trí ban đầu (top: 100%) để tránh text hiện ở giữa
+       contentWrapper.style.top = '100%';
+       contentWrapper.style.transform = 'translateY(0)';
+       contentWrapper.style.animation = 'none';
        
        // Reset result modal
        resultModal.className = 'result-modal';
@@ -300,9 +314,16 @@
         contentWrapper.appendChild(span);
       });
       
+      // Reset CSS về trạng thái ban đầu
       textDisplayArea.className = 'text-display';
       textDisplayArea.classList.remove('review-mode');
       contentWrapper.className = '';
+      
+      // QUAN TRỌNG: Đảm bảo content-wrapper về vị trí ban đầu (tránh text hiện ở giữa)
+      // Reset inline style để override mọi animation còn sót lại
+      contentWrapper.style.top = '100%';
+      contentWrapper.style.transform = 'translateY(0)';
+      contentWrapper.style.animation = 'none';
       
       // Reset result modal state
       resultModal.className = 'result-modal';
