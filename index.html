@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Luyện Phát Âm (Avec Ann)</title>
+  <title>Check Prononciation Avec Ann</title>
   <link rel="icon" href="favicon.png" type="image/png">
   
   <style>
@@ -31,8 +31,9 @@
     .header { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
 
     .header h1 {
-      color: #fff; font-size: 36px; font-weight: 800; text-transform: uppercase;
+      color: #fff; font-size: 32px; font-weight: 800; text-transform: uppercase;
       text-shadow: 0 0 5px #fff, 0 0 20px #ff00de; margin-bottom: 5px;
+      letter-spacing: 1px;
     }
 
     .slogan {
@@ -112,9 +113,15 @@
       background: #fff; padding: 30px; border-radius: 20px; text-align: center; width: 90%; max-width: 450px;
       border: 4px solid #ccc;
     }
-    .result-score { font-size: 50px; font-weight: 900; margin: 15px 0; }
+    .result-score { font-size: 60px; font-weight: 900; margin: 15px 0; }
+    .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; }
+    
+    .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 30px #48bb78; }
     .french-mode .result-score { color: #48bb78; }
+    
+    .chicken-mode .result-box { border-color: #ff4757; box-shadow: 0 0 30px #ff4757; }
     .chicken-mode .result-score { color: #ff4757; }
+
     .btn-close { background: #333; color: white; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin-top: 15px; }
     
     .topic-badge {
@@ -130,7 +137,7 @@
   
   <div class="app-container">
     <header class="header">
-      <h1>🇫🇷 Avec Ann 🇫🇷</h1>
+      <h1>CHECK PRONONCIATION AVEC ANN</h1>
       <div class="slogan">🤵 Bạn là người Pháp hay là con gàe? 🐔</div>
     </header>
 
@@ -181,9 +188,10 @@
     // LOGIC HỆ THỐNG
     // ==========================================
     let currentIdx = 0;
-    let mediaRecorder;
+    let mediaRecorder = null;
     let fullTranscript = "";
-    let timerInterval, chunkInterval;
+    let timerInterval = null;
+    let chunkInterval = null;
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
     let streamReference = null;
@@ -200,7 +208,32 @@
     const modalScore = document.getElementById('modalScore');
     const modalMsg = document.getElementById('modalMsg');
 
+    // Hàm Dừng khẩn cấp: Xóa mọi interval, stop ghi âm, reset biến
+    function forceStop() {
+       clearInterval(timerInterval);
+       clearInterval(chunkInterval);
+       timerInterval = null;
+       chunkInterval = null;
+       isProcessing = false;
+       fullTranscript = ""; // Xóa dữ liệu cũ
+       
+       if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+         mediaRecorder.stop();
+       }
+       if(streamReference) {
+         streamReference.getTracks().forEach(track => track.stop());
+       }
+       
+       mainBtn.disabled = false;
+       mainBtn.textContent = "Démarrer (Bắt đầu)";
+       mainBtn.classList.remove('btn-retry');
+       mainBtn.classList.add('btn-main');
+       contentWrapper.classList.remove('scrolling');
+    }
+
     function loadText(index) {
+      forceStop(); // Reset sạch sẽ trước khi load bài mới
+      
       const data = readingLibrary[index];
       topicDisplay.textContent = data.topic;
       const words = data.text.trim().split(/\s+/);
@@ -212,12 +245,10 @@
         span.dataset.clean = normalizeWord(word); 
         contentWrapper.appendChild(span);
       });
+      
       textDisplayArea.className = 'text-display';
       contentWrapper.className = '';
       timerDisplay.textContent = "01:00";
-      mainBtn.disabled = false;
-      mainBtn.textContent = "Démarrer (Bắt đầu)";
-      mainBtn.className = "btn btn-main";
       timeLeft = TIME_LIMIT;
     }
 
@@ -226,10 +257,14 @@
     }
 
     mainBtn.addEventListener('click', async () => {
+      // Nếu là nút "Làm lại" -> Reset ngay lập tức và load lại bài hiện tại
       if (mainBtn.classList.contains('btn-retry')) {
         loadText(currentIdx);
-        return;
+        // Sau khi load xong, giả lập click start lần nữa nếu muốn, 
+        // nhưng tốt nhất để người dùng tự bấm start lại cho chuẩn bị.
+        return; 
       }
+      
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamReference = stream;
@@ -240,7 +275,7 @@
     });
 
     nextBtn.addEventListener('click', () => {
-      forceStop();
+      forceStop(); // Dừng ngay lập tức
       randomizeLesson();
     });
 
@@ -252,14 +287,6 @@
       loadText(currentIdx);
     }
 
-    function forceStop() {
-       clearInterval(timerInterval);
-       clearInterval(chunkInterval);
-       isProcessing = false;
-       if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-       if(streamReference) streamReference.getTracks().forEach(track => track.stop());
-    }
-
     function startSession(stream) {
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang nghe...";
@@ -267,21 +294,18 @@
       fullTranscript = "";
       isProcessing = true;
 
-      // CẤU HÌNH GHI ÂM (Dùng default mimeType để trình duyệt tự chọn cái tốt nhất)
       mediaRecorder = new MediaRecorder(stream);
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) sendToIBM(e.data);
       };
 
-      // LOGIC GHI MỚI: Cắt file thủ công để tạo Header chuẩn cho mỗi đoạn
       mediaRecorder.start();
 
-      // Cứ 4 giây dừng lại rồi start ngay -> Tạo file trọn vẹn
+      // Cắt file mỗi 4 giây
       chunkInterval = setInterval(() => {
         if (mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
-            // Start lại ngay lập tức nếu thời gian vẫn còn
             if (timeLeft > 0 && isProcessing) {
                 mediaRecorder.start();
             }
@@ -291,14 +315,16 @@
       timerInterval = setInterval(() => {
         timeLeft--;
         timerDisplay.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
-        if (timeLeft <= 0) finishSession();
+        
+        // Hết giờ -> Dừng ngay
+        if (timeLeft <= 0) {
+            finishSession();
+        }
       }, 1000);
     }
 
     async function sendToIBM(blob) {
-      // Chỉ gửi nếu file > 1KB
       if (blob.size < 1000) return;
-      
       const formData = new FormData();
       formData.append('audio', blob, 'chunk.webm');
       try {
@@ -312,14 +338,17 @@
     }
 
     function finishSession() {
-      isProcessing = false;
+      // Dừng hết các đồng hồ
       clearInterval(timerInterval);
       clearInterval(chunkInterval);
+      isProcessing = false;
       
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
       if (streamReference) streamReference.getTracks().forEach(track => track.stop());
       
       mainBtn.textContent = "Đang chấm điểm...";
+      
+      // Đợi 3s để IBM trả về nốt các chunk cuối
       setTimeout(calculateResult, 3000); 
     }
 
@@ -340,15 +369,18 @@
 
       const score = Math.round((correctCount / domWords.length) * 100);
 
+      // --- KHÔI PHỤC LOGIC CÂU ĐÙA ---
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
       
       if (score >= 50) {
         resultModal.classList.add('french-mode');
-        modalMsg.innerHTML = "Chúc mừng!<br>Bạn là người Pháp 🇫🇷🍷";
+        // Icon người Pháp + câu chúc
+        modalMsg.innerHTML = "Chúc mừng, bạn là người Pháp 🇫🇷🍷";
       } else {
         resultModal.classList.add('chicken-mode');
-        modalMsg.innerHTML = "Chia buồn!<br>Bạn là con gàe 🐔🤣";
+        // Icon con gà + câu trêu
+        modalMsg.innerHTML = "Lêu lêu, bạn là con gàe 🐔🤣";
       }
       modalScore.textContent = `${score}%`;
 
