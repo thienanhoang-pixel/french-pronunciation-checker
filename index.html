@@ -118,7 +118,7 @@
   <div class="app-container">
     <header class="header">
       <h1>🇫🇷 Corriger La Prononciation Avec Ann 🇫🇷</h1>
-      <div class="slogan">🤵 Bạn là người Pháp hay là con gàe? 🐔</div>
+      <div class="slogan">🤵 Bạn là người Pháp hay là con gà e? 🐔</div>
     </header>
 
     <main class="main-content">
@@ -298,15 +298,33 @@
       try {
         const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
         
-        if (!res.ok) {
-          throw new Error(`IBM API lỗi: ${res.status}`);
-        }
-        
         const data = await res.json();
         
         // ✅ Kiểm tra IBM có trả về lỗi không
-        if (data.error) {
-          throw new Error(data.error);
+        if (!res.ok || data.error) {
+          const errorMsg = data.error || 'Unknown error';
+          const errorDetails = data.details || '';
+          const errorCode = data.code || res.status;
+          
+          console.error('❌ IBM API Error:', {
+            status: res.status,
+            error: errorMsg,
+            details: errorDetails,
+            code: errorCode
+          });
+          
+          // ✅ Hiển thị lỗi chi tiết hơn
+          let userFriendlyError = `❌ LỖI IBM: ${errorMsg}`;
+          
+          if (errorMsg.includes('credentials not configured')) {
+            userFriendlyError = `❌ LỖI: Chưa cấu hình IBM Cloud!\n\nCần set 2 biến trong Vercel:\n1. SPEECH_TO_TEXT_APIKEY\n2. SPEECH_TO_TEXT_URL`;
+          } else if (errorCode === 401) {
+            userFriendlyError = `❌ LỖI: API Key không đúng!\nKiểm tra lại SPEECH_TO_TEXT_APIKEY trong Vercel`;
+          } else if (errorCode === 404) {
+            userFriendlyError = `❌ LỖI: URL không đúng!\nKiểm tra lại SPEECH_TO_TEXT_URL trong Vercel`;
+          }
+          
+          throw new Error(userFriendlyError);
         }
         
         if (data.text && data.text.trim().length > 0) {
@@ -357,7 +375,7 @@
       
       // ✅ KIỂM TRA: Nếu IBM không trả về gì → Báo lỗi
       if (!fullTranscript || fullTranscript.trim().length === 0) {
-        alert("⚠️ LỖI: IBM Cloud không nghe được gì!\n\nNguyên nhân có thể:\n1. Chưa set IBM_API_KEY trong Vercel\n2. Chưa set IBM_URL trong Vercel\n3. Micro không hoạt động\n4. Không có âm thanh\n\nVui lòng kiểm tra Console (F12) để biết chi tiết.");
+        alert("⚠️ LỖI: IBM Cloud không nghe được gì!\n\nNguyên nhân có thể:\n1. Chưa cấu hình đúng SPEECH_TO_TEXT_APIKEY và SPEECH_TO_TEXT_URL trong Vercel\n2. Micro không hoạt động\n3. Không có âm thanh hoặc nói quá nhỏ\n4. IBM Service đang bị lỗi\n\nVui lòng:\n- Kiểm tra Console (F12) xem lỗi chi tiết\n- Thử nói to và rõ hơn\n- Kiểm tra mic đã bật chưa");
         mainBtn.disabled = false;
         mainBtn.textContent = "🔄 Thử lại";
         mainBtn.classList.add('btn-retry');
@@ -403,7 +421,7 @@
         modalMsg.innerHTML = "Chúc mừng!<br>Bạn là người Pháp 🇫🇷🍷";
       } else {
         resultModal.classList.add('chicken-mode');
-        modalMsg.innerHTML = "Chia buồn!<br>Bạn là con gàe 🐔🤣";
+        modalMsg.innerHTML = "Chia buồn!<br>Bạn là con gà e 🐔🤣";
       }
       modalScore.textContent = `${score}%`;
 
