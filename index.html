@@ -284,9 +284,10 @@
        // Reset animation và position của content-wrapper
        contentWrapper.classList.remove('scrolling');
        // Quan trọng: Reset về vị trí ban đầu (top: 100%) để tránh text hiện ở giữa
+       // Chỉ set top, không set animation để khi bắt đầu animation vẫn chạy được
        contentWrapper.style.top = '100%';
-       contentWrapper.style.transform = 'translateY(0)';
-       contentWrapper.style.animation = 'none';
+       contentWrapper.style.transform = '';
+       contentWrapper.style.animation = '';
        
        // Reset result modal
        resultModal.className = 'result-modal';
@@ -320,10 +321,10 @@
       contentWrapper.className = '';
       
       // QUAN TRỌNG: Đảm bảo content-wrapper về vị trí ban đầu (tránh text hiện ở giữa)
-      // Reset inline style để override mọi animation còn sót lại
+      // Chỉ set top, không set animation để khi bắt đầu animation vẫn chạy được
       contentWrapper.style.top = '100%';
-      contentWrapper.style.transform = 'translateY(0)';
-      contentWrapper.style.animation = 'none';
+      contentWrapper.style.transform = '';
+      contentWrapper.style.animation = '';
       
       // Reset result modal state
       resultModal.className = 'result-modal';
@@ -375,6 +376,15 @@
       
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang nghe...";
+      
+      // Xóa inline style để animation có thể hoạt động
+      contentWrapper.style.top = '';
+      contentWrapper.style.transform = '';
+      contentWrapper.style.animation = '';
+      
+      // Reset về vị trí ban đầu trước khi add animation
+      // Force reflow để đảm bảo style được apply
+      contentWrapper.offsetHeight;
       contentWrapper.classList.add('scrolling');
       
       mediaRecorder = new MediaRecorder(stream);
