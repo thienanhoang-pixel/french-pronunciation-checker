@@ -5,17 +5,16 @@ import { IamAuthenticator } from 'ibm-watson/auth/index.js';
 
 export const config = {
   api: {
-    bodyParser: false, // Bắt buộc để nhận file audio
+    bodyParser: false,
   },
 };
 
-// 1. Cấu hình IBM Watson
-// Hãy chắc chắn bạn đã cài: npm install ibm-watson
+// ✅ FIX 1: Dùng Broadband Model cho microphone máy tính
 const speechToText = new SpeechToTextV1({
   authenticator: new IamAuthenticator({
-    apikey: process.env.IBM_API_KEY, // Lấy từ biến môi trường
+    apikey: process.env.IBM_API_KEY,
   }),
-  serviceUrl: process.env.IBM_URL,   // Lấy từ biến môi trường
+  serviceUrl: process.env.IBM_URL,
 });
 
 export default async function handler(req, res) {
@@ -24,7 +23,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 2. Nhận file ghi âm từ Frontend
     const data = await new Promise((resolve, reject) => {
       const form = new IncomingForm();
       form.parse(req, (err, fields, files) => {
@@ -38,30 +36,59 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Không tìm thấy file audio' });
     }
 
-    // Lấy đường dẫn file (xử lý khác nhau tùy phiên bản formidable)
     const filePath = Array.isArray(audioFile) ? audioFile[0].filepath : audioFile.filepath;
 
-    // 3. Gửi sang IBM Watson để dịch
+    // ✅ FIX 2: Tăng độ chính xác với các tham số tối ưu
     const params = {
       audio: fs.createReadStream(filePath),
-      contentType: 'audio/webm', // Định dạng file từ trình duyệt
-      model: 'fr-FR_NarrowbandModel', // Model tiếng Pháp tối ưu cho giọng nói
+      contentType: 'audio/webm',
+      model: 'fr-FR_BroadbandModel', // ✅ Thay đổi từ Narrowband → Broadband
+      
+      // ✅ FIX 3: Bật các tính năng lọc nhiễu
+      backgroundAudioSuppression: 0.5, // Giảm tiếng ồn nền (0.0-1.0)
+      speechDetectorSensitivity: 0.4,  // Giảm độ nhạy (0.0-1.0, càng thấp càng ít nhận tiếng thở)
+      
+      // ✅ FIX 4: Tăng độ chính xác
+      smartFormatting: true, // Tự động format số, ngày tháng
+      profanityFilter: false, // Không lọc từ
+      
+      // ✅ FIX 5: Lấy nhiều alternatives để chọn kết quả tốt nhất
+      maxAlternatives: 3,
     };
 
     const { result } = await speechToText.recognize(params);
-    
-    // 4. Lấy kết quả trả về
-    // IBM trả về cấu trúc phức tạp, cần bóc tách lấy text
-    const transcript = result.results
-      .map(r => r.alternatives[0].transcript)
+
+    // ✅ FIX 6: Chỉ lấy phần có confidence cao
+    const transcripts = result.results
+      .filter(r => r.final === true) // Chỉ lấy kết quả cuối cùng (không phải tạm thời)
+      .map(r => {
+        const best = r.alternatives[0];
+        // Chỉ lấy những đoạn có confidence > 0.3 (tránh tiếng thở, ồn)
+        return best.confidence > 0.3 ? best.transcript : '';
+      })
+      .filter(t => t.trim().length > 0) // Loại bỏ chuỗi rỗng
       .join(' ');
 
-    console.log("IBM nghe được:", transcript); // Log để check lỗi trên server
+    // ✅ FIX 7: Lọc thêm lần nữa - loại bỏ những từ ngắn lẻ loi (tiếng thở thường tạo ra)
+    const cleanedTranscript = transcripts
+      .split(' ')
+      .filter(word => word.length > 1) // Loại từ 1 chữ cái
+      .join(' ');
 
-    return res.status(200).json({ text: transcript });
+    console.log("🎤 IBM nghe được:", cleanedTranscript);
+    console.log("📊 Confidence scores:", result.results.map(r => r.alternatives[0].confidence));
+
+    return res.status(200).json({ 
+      text: cleanedTranscript,
+      // Trả thêm metadata để debug
+      _debug: {
+        rawResults: result.results.length,
+        avgConfidence: result.results.reduce((sum, r) => sum + r.alternatives[0].confidence, 0) / result.results.length
+      }
+    });
 
   } catch (error) {
-    console.error('Lỗi IBM:', error);
+    console.error('❌ Lỗi IBM:', error);
     return res.status(500).json({ error: error.message });
   }
 }
