@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Prononciation Avec Ann</title>
+  <link rel="icon" href="favicon.png" type="image/png">
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body { height: 100%; width: 100%; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url('bg.jpg') no-repeat center center fixed; 
+      background-size: cover;
+      display: flex; flex-direction: column; overflow: hidden; color: #fff;
+    }
+
+    .overlay {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6); z-index: 0;
+    }
+
+    .app-container {
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      padding: 24px; position: relative; z-index: 1;
+    }
+
+    .header { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
+
+    .header h1 {
+      color: #fff; font-size: 30px; font-weight: 800; text-transform: uppercase;
+      text-shadow: 0 0 5px #fff, 0 0 20px #ff00de; margin-bottom: 5px;
+      letter-spacing: 1px;
+    }
+
+    .slogan {
+      font-size: 14px; font-weight: 600; background: rgba(0, 0, 0, 0.7);
+      display: inline-block; padding: 5px 15px; border-radius: 50px;
+      border: 1px solid #00ffea; color: #00ffea;
+    }
+
+    .main-content {
+      flex: 1; display: flex; flex-direction: column;
+      max-width: 900px; width: 100%; margin: 0 auto; min-height: 0;
+    }
+
+    .text-display-wrapper {
+      flex: 1; background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px; 
+      overflow: hidden; 
+      margin-bottom: 15px; position: relative;
+      border: 2px solid rgba(255,255,255,0.2);
+      display: flex; flex-direction: column;
+    }
+
+    .text-display {
+      flex: 1; position: relative; padding: 0 40px; overflow-y: hidden; display: block; 
+    }
+
+    .text-display.review-mode {
+      overflow-y: auto; padding-top: 20px; padding-bottom: 20px;
+    }
+
+    #content-wrapper {
+      width: 100%; text-align: justify;
+      position: absolute; top: 100%; left: 0; right: 0;
+      padding-bottom: 100px;
+    }
+
+    .review-mode #content-wrapper {
+      position: relative; top: 0 !important; transform: none !important; animation: none !important;
+    }
+
+    .scrolling { animation: scrollUp 60s linear forwards; }
+    @keyframes scrollUp { 
+      from { top: 100%; transform: translateY(0); } 
+      to { top: 0; transform: translateY(-100%); } 
+    }
+
+    .word {
+      display: inline-block; font-size: 24px; line-height: 1.8;
+      padding: 0 2px; border-radius: 4px; color: #333; margin-right: 4px;
+    }
+    .word.correct { background-color: #48bb78; color: #fff; border-bottom: 2px solid #2f855a; }
+    .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.5; }
+
+    .controls {
+      display: flex; gap: 15px; align-items: center; justify-content: center;
+      background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 16px; flex-shrink: 0;
+    }
+
+    .btn {
+      padding: 12px 24px; font-size: 16px; font-weight: bold; border: none; border-radius: 50px;
+      cursor: pointer; transition: 0.2s; min-width: 130px;
+    }
+    .btn-main { background: #fbbf24; color: #744210; }
+    .btn-main:hover { background: #fff; }
+    .btn-next { background: #63b3ed; color: #fff; }
+    
+    .timer { font-size: 24px; font-weight: 700; color: #fff; min-width: 70px; text-align: center; }
+
+    .result-modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); z-index: 2000; display: none;
+      align-items: center; justify-content: center;
+    }
+    .result-modal.active { display: flex; }
+    .result-box {
+      background: #fff; padding: 30px; border-radius: 20px; text-align: center; width: 90%; max-width: 450px;
+      border: 4px solid #ccc;
+    }
+    .result-score { font-size: 60px; font-weight: 900; margin: 15px 0; }
+    .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; color: #333; }
+    
+    .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 30px #48bb78; }
+    .french-mode .result-score { color: #48bb78; }
+    .french-mode .result-msg { color: #2f855a; }
+    
+    .chicken-mode .result-box { border-color: #ff4757; box-shadow: 0 0 30px #ff4757; }
+    .chicken-mode .result-score { color: #ff4757; }
+    .chicken-mode .result-msg { color: #c53030; }
+
+    .btn-close { background: #333; color: white; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin-top: 15px; }
+    
+    .topic-badge {
+      position: absolute; top: 10px; left: 10px; 
+      background: #333; color: #fff; padding: 4px 10px; 
+      border-radius: 4px; font-size: 12px; z-index: 10;
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    #debugInfo {
+        position: fixed; bottom: 5px; left: 5px; 
+        font-size: 10px; color: rgba(255,255,255,0.5); 
+        max-width: 300px; z-index: 2001; pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  
+  <div class="app-container">
+    <header class="header">
+      <h1>CHECK PRONONCIATION AVEC ANN</h1>
+      <div class="slogan">🤵 Bạn là người Pháp hay là con gàe? 🐔</div>
+    </header>
+
+    <main class="main-content">
+      <div class="text-display-wrapper">
+        <div class="topic-badge" id="topicDisplay">Topic</div>
+        <div class="timer" id="timer" style="position: absolute; top: 10px; right: 10px; color: #333; z-index: 10;">01:00</div>
+        
+        <div class="text-display" id="textDisplayArea">
+          <div id="content-wrapper"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="mainBtn" class="btn btn-main">Démarrer (Bắt đầu)</button>
+        <button id="nextBtn" class="btn btn-next">Bài khác (Autres) ></button>
+      </div>
+    </main>
+  </div>
+  
+  <div id="debugInfo"></div>
+
+  <div class="result-modal" id="resultModal">
+    <div class="result-box">
+      <h2>KẾT QUẢ</h2>
+      <div class="result-score" id="modalScore">0%</div>
+      <div class="result-msg" id="modalMsg">...</div>
+      <button class="btn-close" onclick="closeResult()">Xem lại lỗi sai</button>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // DỮ LIỆU BÀI ĐỌC
+    // ==========================================
+    const readingLibrary = [
+      { topic: "Khám phá Paris", text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles." },
+      { topic: "Nghệ thuật sống", text: "En France, la gastronomie est bien plus qu'une simple façon de se nourrir, c'est un véritable art de vivre. Le repas est un moment sacré où la famille et les amis se réunissent pour partager du bonheur et des discussions animées. On prend le temps de déguster chaque plat, de l'entrée au dessert, accompagné souvent d'un verre de vin rouge ou blanc. Les marchés locaux regorgent de produits frais : des fromages variés, des légumes colorés et des fruits délicieux. Cuisiner est un acte d'amour et de tradition. Chaque région possède ses propres spécialités et ses secrets culinaires qui se transmettent de génération en génération avec fierté." },
+      { topic: "Lợi ích của việc đọc sách", text: "Dans notre monde moderne dominé par les écrans et la technologie, prendre le temps de lire un livre est devenu un luxe précieux. La lecture nous permet de voyager sans bouger de notre fauteuil. Elle ouvre notre esprit à de nouvelles idées, enrichit notre vocabulaire et stimule notre imagination. Quand on lit un roman, on vit mille vies différentes, on ressent les émotions des personnages et on oublie nos propres soucis quotidiens. Que ce soit de la poésie, de la science-fiction ou de l'histoire, chaque livre est une porte ouverte vers un autre univers. C'est une habitude qui calme l'esprit et nourrit l'âme en profondeur." },
+      { topic: "Bảo vệ thiên nhiên", text: "La nature nous offre tout ce dont nous avons besoin pour vivre : l'air que nous respirons, l'eau que nous buvons et la nourriture que nous mangeons. Cependant, l'activité humaine menace aujourd'hui cet équilibre fragile. Les forêts disparaissent, les océans sont pollués et le climat change rapidement. Il est urgent de changer nos habitudes pour protéger notre belle planète bleue. Des gestes simples peuvent faire une grande différence, comme réduire notre consommation de plastique, recycler nos déchets ou utiliser les transports en commun. Protéger l'environnement, ce n'est pas seulement sauver les animaux, c'est aussi assurer un avenir sain et heureux pour nos enfants et les générations futures." },
+      { topic: "Giá trị của tình bạn", text: "On dit souvent que les amis sont la famille que l'on choisit. Une amitié véritable est l'une des choses les plus précieuses dans la vie d'une personne. Un vrai ami est quelqu'un qui est là pour vous dans les moments difficiles, qui vous écoute sans vous juger et qui partage vos joies comme vos peines. Avec le temps et la distance, il est parfois difficile de garder le contact, mais les liens forts résistent à tout. Ce n'est pas la quantité d'amis qui compte, mais la qualité. Avoir une personne sur qui compter, avec qui rire et pleurer, est un cadeau inestimable qui rend la vie beaucoup plus douce." },
+      { topic: "Du lịch và trải nghiệm", text: "Voyager est la meilleure école de la vie. Quand on visite un pays étranger, on ne découvre pas seulement de nouveaux paysages, on découvre aussi une nouvelle façon de penser et de vivre. On apprend à sortir de sa zone de confort, à goûter des aliments inconnus et à essayer de parler une autre langue. Ces expériences nous rendent plus ouverts, plus tolérants et plus humbles. On réalise que malgré nos différences culturelles, les êtres humains partagent les mêmes rêves et les mêmes émotions partout sur la Terre. Le voyage nous change intérieurement et nous laisse des souvenirs gravés à jamais dans notre mémoire." },
+      { topic: "Thể thao và sức khỏe", text: "Le sport joue un rôle essentiel pour maintenir une bonne santé physique et mentale. Pratiquer une activité physique régulière aide à réduire le stress, à améliorer le sommeil et à renforcer le cœur. Que ce soit la course à pied, la natation, le yoga ou le football, l'important est de bouger et de se faire plaisir. Le sport nous apprend aussi des valeurs importantes comme la discipline, le respect des règles et l'esprit d'équipe. Se dépasser, fixer des objectifs et voir ses progrès procure une grande satisfaction personnelle. Comme on dit souvent : un esprit sain dans un corps sain est la clé du bonheur." },
+      { topic: "Công nghệ và cuộc sống", text: "La technologie a transformé notre façon de vivre à une vitesse incroyable. Aujourd'hui, nous pouvons communiquer instantanément avec des personnes à l'autre bout du monde, accéder à toute la connaissance humaine en un clic et travailler depuis n'importe où. Cependant, cette connexion permanente a aussi ses inconvénients. Nous passons parfois plus de temps à regarder nos téléphones qu'à parler aux gens qui sont en face de nous. Il est important de trouver un équilibre. La technologie doit rester un outil pour nous servir, et non un maître qui contrôle notre temps et notre attention. Savoir se déconnecter est devenu une compétence essentielle." },
+      { topic: "Hạnh phúc từ điều giản đơn", text: "Beaucoup de gens cherchent le bonheur dans la richesse, la célébrité ou la réussite professionnelle. Pourtant, le vrai bonheur se cache souvent dans les choses simples de la vie quotidienne. C'est l'odeur de la pluie en été, le sourire d'un enfant, un repas partagé avec des proches ou une promenade tranquille dans la forêt. Savoir apprécier l'instant présent est un secret que nous oublions trop souvent. La gratitude est une clé puissante : être reconnaissant pour ce que l'on a, au lieu de toujours désirer ce que l'on n'a pas. Le bonheur n'est pas une destination à atteindre, c'est une manière de voyager chaque jour." },
+      { topic: "Giấc mơ và nỗ lực", text: "Avoir des rêves est ce qui donne un sens à notre existence. Que ce soit devenir médecin, voyager autour du monde, écrire un livre ou simplement fonder une famille heureuse, nos rêves nous poussent à avancer. Mais rêver ne suffit pas, il faut aussi avoir le courage d'agir. Le chemin vers le succès est souvent rempli d'obstacles et d'échecs. Ce n'est pas grave de tomber, l'important est de se relever et de continuer à essayer. La persévérance et le travail acharné sont les clés de la réussite. Ne laissez jamais personne vous dire que vos rêves sont impossibles, car votre potentiel est infini." }
+    ];
+
+    // ==========================================
+    // LOGIC HỆ THỐNG
+    // ==========================================
+    let currentIdx = 0;
+    let mediaRecorder = null;
+    let fullTranscript = "";
+    
+    // Quản lý Timer & Interval
+    let timerInterval = null;
+    let chunkInterval = null;
+    let resultTimeout = null;
+    
+    const TIME_LIMIT = 60;
+    let timeLeft = TIME_LIMIT;
+    let streamReference = null;
+    let currentSessionId = 0;
+    
+    // DOM Elements
+    const contentWrapper = document.getElementById('content-wrapper');
+    const textDisplayArea = document.getElementById('textDisplayArea');
+    const mainBtn = document.getElementById('mainBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const timerDisplay = document.getElementById('timer');
+    const topicDisplay = document.getElementById('topicDisplay');
+    const resultModal = document.getElementById('resultModal');
+    const modalScore = document.getElementById('modalScore');
+    const modalMsg = document.getElementById('modalMsg');
+    const debugInfo = document.getElementById('debugInfo');
+
+    // --- HÀM 1: DỪNG TOÀN BỘ TIMER (KILL SWITCH) ---
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    // --- HÀM 2: DỌN SẠCH DỮ LIỆU CŨ (NUCLEAR RESET) ---
+    function nuclearReset() {
+       stopTimer(); // Dừng đồng hồ trước tiên
+       
+       if (chunkInterval) clearInterval(chunkInterval);
+       if (resultTimeout) clearTimeout(resultTimeout);
+       
+       chunkInterval = null;
+       resultTimeout = null;
+       
+       // Tăng ID phiên để chặn dữ liệu cũ
+       currentSessionId = Date.now(); 
+       
+       // Xóa transcript
+       fullTranscript = "";
+       debugInfo.textContent = "";
+       
+       // Dừng Mic
+       if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+         try { mediaRecorder.stop(); } catch(e){}
+       }
+       mediaRecorder = null;
+       
+       if(streamReference) {
+         try { streamReference.getTracks().forEach(track => track.stop()); } catch(e){}
+         streamReference = null;
+       }
+       
+       // Reset UI
+       mainBtn.disabled = false;
+       mainBtn.textContent = "Démarrer (Bắt đầu)";
+       mainBtn.classList.remove('btn-retry');
+       mainBtn.classList.add('btn-main');
+       contentWrapper.classList.remove('scrolling');
+       
+       // Reset result modal
+       resultModal.className = 'result-modal';
+       resultModal.style.display = 'none';
+       resultModal.classList.remove('active', 'french-mode', 'chicken-mode');
+       textDisplayArea.classList.remove('review-mode');
+       
+       // Reset hiển thị đồng hồ về 60s ngay lập tức
+       timeLeft = TIME_LIMIT;
+       timerDisplay.textContent = "01:00";
+    }
+
+    function loadText(index) {
+      nuclearReset(); 
+      
+      const data = readingLibrary[index];
+      topicDisplay.textContent = data.topic;
+      const words = data.text.trim().split(/\s+/);
+      contentWrapper.innerHTML = '';
+      words.forEach(word => {
+        const span = document.createElement('span');
+        span.className = 'word';
+        span.textContent = word;
+        span.dataset.clean = normalizeWord(word); 
+        contentWrapper.appendChild(span);
+      });
+      
+      textDisplayArea.className = 'text-display';
+      textDisplayArea.classList.remove('review-mode');
+      contentWrapper.className = '';
+      
+      // Reset result modal state
+      resultModal.className = 'result-modal';
+      resultModal.style.display = 'none';
+      resultModal.classList.remove('active', 'french-mode', 'chicken-mode');
+    }
+
+    function normalizeWord(word) {
+      return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s+/g, "");
+    }
+
+    // --- XỬ LÝ NÚT BẤM ---
+    mainBtn.addEventListener('click', async () => {
+      if (mainBtn.classList.contains('btn-retry')) {
+        loadText(currentIdx);
+        return; 
+      }
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamReference = stream;
+        startSession(stream);
+      } catch (err) {
+        alert("Lỗi Micro: " + err.message);
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      nuclearReset();
+      randomizeLesson();
+    });
+
+    function randomizeLesson() {
+      let newIdx;
+      do { newIdx = Math.floor(Math.random() * readingLibrary.length); } 
+      while (newIdx === currentIdx && readingLibrary.length > 1);
+      currentIdx = newIdx;
+      loadText(currentIdx);
+    }
+
+    function startSession(stream) {
+      stopTimer(); // Đảm bảo không có timer nào đang chạy
+      
+      // *** FIX QUAN TRỌNG: RESET TIME NGAY TẠI ĐÂY ***
+      timeLeft = TIME_LIMIT; 
+      timerDisplay.textContent = "01:00";
+      
+      const sessionForThisRecorder = currentSessionId; 
+      
+      mainBtn.disabled = true;
+      mainBtn.textContent = "Đang nghe...";
+      contentWrapper.classList.add('scrolling');
+      
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) sendToIBM(e.data, sessionForThisRecorder);
+      };
+
+      mediaRecorder.start();
+
+      // Chunking 4s
+      chunkInterval = setInterval(() => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            if (timeLeft > 0 && currentSessionId === sessionForThisRecorder) {
+                mediaRecorder.start();
+            }
+        }
+      }, 4000);
+
+      // *** TIMER LOGIC AN TOÀN ***
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        
+        // Hiển thị: Nếu < 0 thì vẫn hiện 00 để mắt không bị khó chịu
+        const displayTime = Math.max(0, timeLeft);
+        timerDisplay.textContent = `00:${displayTime < 10 ? '0'+displayTime : displayTime}`;
+        
+        if (timeLeft <= 0) {
+            stopTimer(); // Dừng đếm ngay
+            finishSession();
+        }
+      }, 1000);
+    }
+
+    async function sendToIBM(blob, sessionId) {
+      if (sessionId !== currentSessionId) return;
+      if (blob.size < 1000) return;
+
+      const formData = new FormData();
+      formData.append('audio', blob, 'chunk.webm');
+      try {
+        const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+        const data = await res.json();
+        
+        if (sessionId !== currentSessionId) return;
+
+        if (data.text) {
+            fullTranscript += " " + data.text;
+            debugInfo.textContent = "Listening: " + fullTranscript.substring(Math.max(0, fullTranscript.length - 50));
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    function finishSession() {
+      stopTimer();
+      if (chunkInterval) clearInterval(chunkInterval);
+      
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      if (streamReference) streamReference.getTracks().forEach(track => track.stop());
+      
+      mainBtn.disabled = true;
+      mainBtn.textContent = "Đang chấm điểm...";
+      
+      // Clear any existing timeout first
+      if (resultTimeout) clearTimeout(resultTimeout);
+      
+      resultTimeout = setTimeout(() => {
+          // Double check that we're still in scoring state and have words to score
+          if(mainBtn.textContent === "Đang chấm điểm..." && document.querySelectorAll('.word').length > 0) {
+              calculateResult();
+          }
+      }, 3000); 
+    }
+
+    function calculateResult() {
+      // Clear any pending timeout
+      if (resultTimeout) {
+        clearTimeout(resultTimeout);
+        resultTimeout = null;
+      }
+      
+      const spokenWordsArray = fullTranscript.toLowerCase().split(/\s+/).map(w => normalizeWord(w));
+      const domWords = document.querySelectorAll('.word');
+      
+      // Reset all word classes first to ensure clean state
+      domWords.forEach(span => {
+        span.classList.remove('correct', 'wrong');
+      });
+      
+      let correctCount = 0;
+
+      domWords.forEach(span => {
+        const targetWord = span.dataset.clean;
+        const foundIndex = spokenWordsArray.indexOf(targetWord);
+
+        if (foundIndex !== -1) {
+          span.classList.add('correct');
+          correctCount++;
+          spokenWordsArray.splice(foundIndex, 1);
+        } else {
+          span.classList.add('wrong');
+        }
+      });
+
+      const score = Math.round((correctCount / domWords.length) * 100) || 0;
+
+      resultModal.className = 'result-modal active';
+      resultModal.style.display = 'flex';
+      resultModal.classList.remove('french-mode', 'chicken-mode');
+      
+      if (score >= 50) {
+        resultModal.classList.add('french-mode');
+        modalMsg.innerHTML = "Chúc mừng, bạn là người Pháp 🇫🇷🍷";
+      } else {
+        resultModal.classList.add('chicken-mode');
+        modalMsg.innerHTML = "Lêu lêu, bạn là con gàe 🐔🤣";
+      }
+      modalScore.textContent = `${score}%`;
+
+      mainBtn.disabled = false;
+      mainBtn.textContent = "🔄 Làm lại";
+      mainBtn.classList.add('btn-retry');
+      mainBtn.classList.remove('btn-main');
+    }
+
+    function closeResult() {
+      resultModal.style.display = 'none';
+      textDisplayArea.classList.add('review-mode');
+    }
+
+    window.onload = function() { randomizeLesson(); };
+  </script>
+</body>
+</html>
