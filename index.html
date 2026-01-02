@@ -3,79 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Corriger La Prononciation Avec Ann</title>
+  <title>Luyện Phát Âm (Avec Ann)</title>
   <link rel="icon" href="favicon.png" type="image/png">
   
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     html, body { height: 100%; width: 100%; }
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: url('bg.jpg') no-repeat center center fixed; 
       background-size: cover;
       display: flex; flex-direction: column; overflow: hidden; color: #fff;
     }
+
     .overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0, 0, 0, 0.6); z-index: 0;
     }
+
     .app-container {
       width: 100%; height: 100%; display: flex; flex-direction: column;
       padding: 24px; position: relative; z-index: 1;
     }
+
     .header { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
+
     .header h1 {
       color: #fff; font-size: 36px; font-weight: 800; text-transform: uppercase;
-      text-shadow: 0 0 10px #fff, 0 0 20px #00ffea, 0 0 30px #00ffea, 0 0 40px #00ffea;
-      margin-bottom: 5px; letter-spacing: 2px;
-      animation: neonPulse 2s ease-in-out infinite;
+      text-shadow: 0 0 5px #fff, 0 0 20px #ff00de; margin-bottom: 5px;
     }
-    @keyframes neonPulse {
-      0%, 100% { text-shadow: 0 0 10px #fff, 0 0 20px #00ffea, 0 0 30px #00ffea; }
-      50% { text-shadow: 0 0 20px #fff, 0 0 30px #00ffea, 0 0 40px #00ffea, 0 0 50px #00ffea; }
-    }
+
     .slogan {
       font-size: 14px; font-weight: 600; background: rgba(0, 0, 0, 0.7);
       display: inline-block; padding: 5px 15px; border-radius: 50px;
       border: 1px solid #00ffea; color: #00ffea;
     }
+
     .main-content {
       flex: 1; display: flex; flex-direction: column;
       max-width: 900px; width: 100%; margin: 0 auto; min-height: 0;
     }
+
+    /* KHUNG HIỂN THỊ VĂN BẢN */
     .text-display-wrapper {
       flex: 1; background: rgba(255, 255, 255, 0.95);
-      border-radius: 16px; overflow: hidden; margin-bottom: 15px; position: relative;
-      border: 2px solid rgba(255,255,255,0.2); display: flex; flex-direction: column;
+      border-radius: 16px; 
+      overflow: hidden; 
+      margin-bottom: 15px; position: relative;
+      border: 2px solid rgba(255,255,255,0.2);
+      display: flex; flex-direction: column;
     }
+
     .text-display {
       flex: 1; position: relative; padding: 0 40px; overflow-y: hidden; display: block; 
     }
+
     .text-display.review-mode {
       overflow-y: auto; padding-top: 20px; padding-bottom: 20px;
     }
+
     #content-wrapper {
       width: 100%; text-align: justify;
-      position: absolute; top: 100%; left: 0; right: 0; padding-bottom: 100px;
+      position: absolute; top: 100%; left: 0; right: 0;
+      padding-bottom: 100px;
     }
+
     .review-mode #content-wrapper {
       position: relative; top: 0 !important; transform: none !important; animation: none !important;
     }
+
     .scrolling { animation: scrollUp 60s linear forwards; }
     @keyframes scrollUp { 
       from { top: 100%; transform: translateY(0); } 
       to { top: 0; transform: translateY(-100%); } 
     }
+
     .word {
       display: inline-block; font-size: 24px; line-height: 1.8;
       padding: 0 2px; border-radius: 4px; color: #333; margin-right: 4px;
     }
     .word.correct { background-color: #48bb78; color: #fff; }
     .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.6; }
+
     .controls {
       display: flex; gap: 15px; align-items: center; justify-content: center;
       background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 16px; flex-shrink: 0;
     }
+
     .btn {
       padding: 12px 24px; font-size: 16px; font-weight: bold; border: none; border-radius: 50px;
       cursor: pointer; transition: 0.2s; min-width: 130px;
@@ -83,7 +99,9 @@
     .btn-main { background: #fbbf24; color: #744210; }
     .btn-main:hover { background: #fff; }
     .btn-next { background: #63b3ed; color: #fff; }
+    
     .timer { font-size: 24px; font-weight: 700; color: #fff; min-width: 70px; text-align: center; }
+
     .result-modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.9); z-index: 2000; display: none;
@@ -98,17 +116,12 @@
     .french-mode .result-score { color: #48bb78; }
     .chicken-mode .result-score { color: #ff4757; }
     .btn-close { background: #333; color: white; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin-top: 15px; }
+    
     .topic-badge {
       position: absolute; top: 10px; left: 10px; 
       background: #333; color: #fff; padding: 4px 10px; 
       border-radius: 4px; font-size: 12px; z-index: 10;
       text-transform: uppercase; letter-spacing: 1px;
-    }
-    .debug-info {
-      position: absolute; bottom: 10px; left: 10px; right: 10px;
-      background: rgba(0,0,0,0.8); color: #0f0; padding: 8px;
-      border-radius: 8px; font-size: 11px; font-family: monospace;
-      max-height: 80px; overflow-y: auto; z-index: 10;
     }
   </style>
 </head>
@@ -117,8 +130,8 @@
   
   <div class="app-container">
     <header class="header">
-      <h1>🇫🇷 Corriger La Prononciation Avec Ann 🇫🇷</h1>
-      <div class="slogan">🤵 Bạn là người Pháp hay là con gà e? 🐔</div>
+      <h1>🇫🇷 Avec Ann 🇫🇷</h1>
+      <div class="slogan">🤵 Bạn là người Pháp hay là con gàe? 🐔</div>
     </header>
 
     <main class="main-content">
@@ -128,10 +141,6 @@
         
         <div class="text-display" id="textDisplayArea">
           <div id="content-wrapper"></div>
-        </div>
-        
-        <div class="debug-info" id="debugInfo" style="display: none;">
-          🎤 Đang nghe...
         </div>
       </div>
 
@@ -152,38 +161,35 @@
   </div>
 
   <script>
+    // ==========================================
+    // THƯ VIỆN BÀI ĐỌC
+    // ==========================================
     const readingLibrary = [
-      {
-        topic: "Khám phá Paris",
-        text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles."
-      },
-      {
-        topic: "Nghệ thuật sống",
-        text: "En France, la gastronomie est bien plus qu'une simple façon de se nourrir, c'est un véritable art de vivre. Le repas est un moment sacré où la famille et les amis se réunissent pour partager du bonheur et des discussions animées. On prend le temps de déguster chaque plat, de l'entrée au dessert, accompagné souvent d'un verre de vin rouge ou blanc. Les marchés locaux regorgent de produits frais : des fromages variés, des légumes colorés et des fruits délicieux. Cuisiner est un acte d'amour et de tradition. Chaque région possède ses propres spécialités et ses secrets culinaires qui se transmettent de génération en génération avec fierté."
-      },
-      {
-        topic: "Lợi ích của việc đọc sách",
-        text: "Dans notre monde moderne dominé par les écrans et la technologie, prendre le temps de lire un livre est devenu un luxe précieux. La lecture nous permet de voyager sans bouger de notre fauteuil. Elle ouvre notre esprit à de nouvelles idées, enrichit notre vocabulaire et stimule notre imagination. Quand on lit un roman, on vit mille vies différentes, on ressent les émotions des personnages et on oublie nos propres soucis quotidiens. Que ce soit de la poésie, de la science-fiction ou de l'histoire, chaque livre est une porte ouverte vers un autre univers. C'est une habitude qui calme l'esprit et nourrit l'âme en profondeur."
-      },
-      {
-        topic: "Bảo vệ thiên nhiên",
-        text: "La nature nous offre tout ce dont nous avons besoin pour vivre : l'air que nous respirons, l'eau que nous buvons et la nourriture que nous mangeons. Cependant, l'activité humaine menace aujourd'hui cet équilibre fragile. Les forêts disparaissent, les océans sont pollués et le climat change rapidement. Il est urgent de changer nos habitudes pour protéger notre belle planète bleue. Des gestes simples peuvent faire une grande différence, comme réduire notre consommation de plastique, recycler nos déchets ou utiliser les transports en commun. Protéger l'environnement, ce n'est pas seulement sauver les animaux, c'est aussi assurer un avenir sain et heureux pour nos enfants et les générations futures."
-      },
-      {
-        topic: "Giá trị của tình bạn",
-        text: "On dit souvent que les amis sont la famille que l'on choisit. Une amitié véritable est l'une des choses les plus précieuses dans la vie d'une personne. Un vrai ami est quelqu'un qui est là pour vous dans les moments difficiles, qui vous écoute sans vous juger et qui partage vos joies comme vos peines. Avec le temps et la distance, il est parfois difficile de garder le contact, mais les liens forts résistent à tout. Ce n'est pas la quantité d'amis qui compte, mais la qualité. Avoir une personne sur qui compter, avec qui rire et pleurer, est un cadeau inestimable qui rend la vie beaucoup plus douce."
-      }
+      { topic: "Khám phá Paris", text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles." },
+      { topic: "Nghệ thuật sống", text: "En France, la gastronomie est bien plus qu'une simple façon de se nourrir, c'est un véritable art de vivre. Le repas est un moment sacré où la famille et les amis se réunissent pour partager du bonheur et des discussions animées. On prend le temps de déguster chaque plat, de l'entrée au dessert, accompagné souvent d'un verre de vin rouge ou blanc. Les marchés locaux regorgent de produits frais : des fromages variés, des légumes colorés et des fruits délicieux. Cuisiner est un acte d'amour et de tradition. Chaque région possède ses propres spécialités et ses secrets culinaires qui se transmettent de génération en génération avec fierté." },
+      { topic: "Lợi ích của việc đọc sách", text: "Dans notre monde moderne dominé par les écrans et la technologie, prendre le temps de lire un livre est devenu un luxe précieux. La lecture nous permet de voyager sans bouger de notre fauteuil. Elle ouvre notre esprit à de nouvelles idées, enrichit notre vocabulaire et stimule notre imagination. Quand on lit un roman, on vit mille vies différentes, on ressent les émotions des personnages et on oublie nos propres soucis quotidiens. Que ce soit de la poésie, de la science-fiction ou de l'histoire, chaque livre est une porte ouverte vers un autre univers. C'est une habitude qui calme l'esprit et nourrit l'âme en profondeur." },
+      { topic: "Bảo vệ thiên nhiên", text: "La nature nous offre tout ce dont nous avons besoin pour vivre : l'air que nous respirons, l'eau que nous buvons et la nourriture que nous mangeons. Cependant, l'activité humaine menace aujourd'hui cet équilibre fragile. Les forêts disparaissent, les océans sont pollués et le climat change rapidement. Il est urgent de changer nos habitudes pour protéger notre belle planète bleue. Des gestes simples peuvent faire une grande différence, comme réduire notre consommation de plastique, recycler nos déchets ou utiliser les transports en commun. Protéger l'environnement, ce n'est pas seulement sauver les animaux, c'est aussi assurer un avenir sain et heureux pour nos enfants et les générations futures." },
+      { topic: "Giá trị của tình bạn", text: "On dit souvent que les amis sont la famille que l'on choisit. Une amitié véritable est l'une des choses les plus précieuses dans la vie d'une personne. Un vrai ami est quelqu'un qui est là pour vous dans les moments difficiles, qui vous écoute sans vous juger et qui partage vos joies comme vos peines. Avec le temps et la distance, il est parfois difficile de garder le contact, mais les liens forts résistent à tout. Ce n'est pas la quantité d'amis qui compte, mais la qualité. Avoir une personne sur qui compter, avec qui rire et pleurer, est un cadeau inestimable qui rend la vie beaucoup plus douce." },
+      { topic: "Du lịch và trải nghiệm", text: "Voyager est la meilleure école de la vie. Quand on visite un pays étranger, on ne découvre pas seulement de nouveaux paysages, on découvre aussi une nouvelle façon de penser et de vivre. On apprend à sortir de sa zone de confort, à goûter des aliments inconnus et à essayer de parler une autre langue. Ces expériences nous rendent plus ouverts, plus tolérants et plus humbles. On réalise que malgré nos différences culturelles, les êtres humains partagent les mêmes rêves et les mêmes émotions partout sur la Terre. Le voyage nous change intérieurement et nous laisse des souvenirs gravés à jamais dans notre mémoire." },
+      { topic: "Thể thao và sức khỏe", text: "Le sport joue un rôle essentiel pour maintenir une bonne santé physique et mentale. Pratiquer une activité physique régulière aide à réduire le stress, à améliorer le sommeil et à renforcer le cœur. Que ce soit la course à pied, la natation, le yoga ou le football, l'important est de bouger et de se faire plaisir. Le sport nous apprend aussi des valeurs importantes comme la discipline, le respect des règles et l'esprit d'équipe. Se dépasser, fixer des objectifs et voir ses progrès procure une grande satisfaction personnelle. Comme on dit souvent : un esprit sain dans un corps sain est la clé du bonheur." },
+      { topic: "Công nghệ và cuộc sống", text: "La technologie a transformé notre façon de vivre à une vitesse incroyable. Aujourd'hui, nous pouvons communiquer instantanément avec des personnes à l'autre bout du monde, accéder à toute la connaissance humaine en un clic et travailler depuis n'importe où. Cependant, cette connexion permanente a aussi ses inconvénients. Nous passons parfois plus de temps à regarder nos téléphones qu'à parler aux gens qui sont en face de nous. Il est important de trouver un équilibre. La technologie doit rester un outil pour nous servir, et non un maître qui contrôle notre temps et notre attention. Savoir se déconnecter est devenu une compétence essentielle." },
+      { topic: "Hạnh phúc từ điều giản đơn", text: "Beaucoup de gens cherchent le bonheur dans la richesse, la célébrité ou la réussite professionnelle. Pourtant, le vrai bonheur se cache souvent dans les choses simples de la vie quotidienne. C'est l'odeur de la pluie en été, le sourire d'un enfant, un repas partagé avec des proches ou une promenade tranquille dans la forêt. Savoir apprécier l'instant présent est un secret que nous oublions trop souvent. La gratitude est une clé puissante : être reconnaissant pour ce que l'on a, au lieu de toujours désirer ce que l'on n'a pas. Le bonheur n'est pas une destination à atteindre, c'est une manière de voyager chaque jour." },
+      { topic: "Giấc mơ và nỗ lực", text: "Avoir des rêves est ce qui donne un sens à notre existence. Que ce soit devenir médecin, voyager autour du monde, écrire un livre ou simplement fonder une famille heureuse, nos rêves nous poussent à avancer. Mais rêver ne suffit pas, il faut aussi avoir le courage d'agir. Le chemin vers le succès est souvent rempli d'obstacles et d'échecs. Ce n'est pas grave de tomber, l'important est de se relever et de continuer à essayer. La persévérance et le travail acharné sont les clés de la réussite. Ne laissez jamais personne vous dire que vos rêves sont impossibles, car votre potentiel est infini." }
     ];
 
+    // ==========================================
+    // LOGIC HỆ THỐNG
+    // ==========================================
     let currentIdx = 0;
     let mediaRecorder;
     let fullTranscript = "";
-    let timerInterval;
+    let timerInterval, chunkInterval;
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
     let streamReference = null;
-    let pendingRequests = 0; // ✅ Đếm số request đang chờ IBM trả về
+    let isProcessing = false;
     
+    // DOM Elements
     const contentWrapper = document.getElementById('content-wrapper');
     const textDisplayArea = document.getElementById('textDisplayArea');
     const mainBtn = document.getElementById('mainBtn');
@@ -193,19 +199,10 @@
     const resultModal = document.getElementById('resultModal');
     const modalScore = document.getElementById('modalScore');
     const modalMsg = document.getElementById('modalMsg');
-    const debugInfo = document.getElementById('debugInfo');
-
-    // ✅ ĐƠN GIẢN: Chỉ normalize bỏ dấu câu
-    function normalizeWord(word) {
-      return word.toLowerCase()
-        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()«»""'']/g, '')
-        .trim();
-    }
 
     function loadText(index) {
       const data = readingLibrary[index];
       topicDisplay.textContent = data.topic;
-      
       const words = data.text.trim().split(/\s+/);
       contentWrapper.innerHTML = '';
       words.forEach(word => {
@@ -215,7 +212,6 @@
         span.dataset.clean = normalizeWord(word); 
         contentWrapper.appendChild(span);
       });
-
       textDisplayArea.className = 'text-display';
       contentWrapper.className = '';
       timerDisplay.textContent = "01:00";
@@ -223,10 +219,10 @@
       mainBtn.textContent = "Démarrer (Bắt đầu)";
       mainBtn.className = "btn btn-main";
       timeLeft = TIME_LIMIT;
-      debugInfo.style.display = 'none';
-      debugInfo.style.color = '#0f0'; // ✅ Reset màu debug
-      fullTranscript = "";
-      pendingRequests = 0; // ✅ Reset pending requests
+    }
+
+    function normalizeWord(word) {
+      return word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").replace(/\s+/g, "");
     }
 
     mainBtn.addEventListener('click', async () => {
@@ -234,13 +230,12 @@
         loadText(currentIdx);
         return;
       }
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamReference = stream;
         startSession(stream);
       } catch (err) {
-        alert("Lỗi Micro: " + err.message);
+        alert("Lỗi Micro: " + err.message + "\nHãy thử dùng Chrome/Edge nếu Cốc Cốc bị lỗi.");
       }
     });
 
@@ -251,16 +246,16 @@
 
     function randomizeLesson() {
       let newIdx;
-      do {
-        newIdx = Math.floor(Math.random() * readingLibrary.length);
-      } while (newIdx === currentIdx && readingLibrary.length > 1);
-      
+      do { newIdx = Math.floor(Math.random() * readingLibrary.length); } 
+      while (newIdx === currentIdx && readingLibrary.length > 1);
       currentIdx = newIdx;
       loadText(currentIdx);
     }
 
     function forceStop() {
        clearInterval(timerInterval);
+       clearInterval(chunkInterval);
+       isProcessing = false;
        if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
        if(streamReference) streamReference.getTracks().forEach(track => track.stop());
     }
@@ -269,156 +264,73 @@
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang nghe...";
       contentWrapper.classList.add('scrolling');
-      debugInfo.style.display = 'block';
-      debugInfo.textContent = '🎤 Đang ghi âm...';
-
       fullTranscript = "";
-      
-      // ✅ Thử các format mà IBM hỗ trợ
-      let mimeType = 'audio/webm';
-      const types = [
-        'audio/webm;codecs=opus',
-        'audio/ogg;codecs=opus', 
-        'audio/webm',
-        ''
-      ];
-      
-      for (const type of types) {
-        if (MediaRecorder.isTypeSupported(type)) {
-          mimeType = type;
-          console.log('✅ Using MIME type:', mimeType);
-          break;
-        }
-      }
-      
-      mediaRecorder = new MediaRecorder(stream, { mimeType });
-      
+      isProcessing = true;
+
+      // CẤU HÌNH GHI ÂM (Dùng default mimeType để trình duyệt tự chọn cái tốt nhất)
+      mediaRecorder = new MediaRecorder(stream);
+
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) sendToIBM(e.data, mimeType);
+        if (e.data.size > 0) sendToIBM(e.data);
       };
 
-      mediaRecorder.start(3000);
+      // LOGIC GHI MỚI: Cắt file thủ công để tạo Header chuẩn cho mỗi đoạn
+      mediaRecorder.start();
+
+      // Cứ 4 giây dừng lại rồi start ngay -> Tạo file trọn vẹn
+      chunkInterval = setInterval(() => {
+        if (mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            // Start lại ngay lập tức nếu thời gian vẫn còn
+            if (timeLeft > 0 && isProcessing) {
+                mediaRecorder.start();
+            }
+        }
+      }, 4000);
 
       timerInterval = setInterval(() => {
         timeLeft--;
         timerDisplay.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
-        
         if (timeLeft <= 0) finishSession();
       }, 1000);
     }
 
     async function sendToIBM(blob) {
-      pendingRequests++; // ✅ Tăng số request đang chờ
+      // Chỉ gửi nếu file > 1KB
+      if (blob.size < 1000) return;
+      
       const formData = new FormData();
       formData.append('audio', blob, 'chunk.webm');
-      
       try {
         const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
-        
         const data = await res.json();
-        
-        // ✅ Kiểm tra IBM có trả về lỗi không
-        if (!res.ok || data.error) {
-          const errorMsg = data.error || 'Unknown error';
-          const errorDetails = data.details || '';
-          const errorCode = data.code || res.status;
-          
-          console.error('❌ IBM API Error:', {
-            status: res.status,
-            error: errorMsg,
-            details: errorDetails,
-            code: errorCode
-          });
-          
-          // ✅ Hiển thị lỗi chi tiết hơn
-          let userFriendlyError = `❌ LỖI IBM: ${errorMsg}`;
-          
-          if (errorMsg.includes('credentials not configured')) {
-            userFriendlyError = `❌ LỖI: Chưa cấu hình IBM Cloud!\n\nCần set 2 biến trong Vercel:\n1. SPEECH_TO_TEXT_APIKEY\n2. SPEECH_TO_TEXT_URL`;
-          } else if (errorCode === 401) {
-            userFriendlyError = `❌ LỖI: API Key không đúng!\nKiểm tra lại SPEECH_TO_TEXT_APIKEY trong Vercel`;
-          } else if (errorCode === 404) {
-            userFriendlyError = `❌ LỖI: URL không đúng!\nKiểm tra lại SPEECH_TO_TEXT_URL trong Vercel`;
-          }
-          
-          throw new Error(userFriendlyError);
+        if (data.text) {
+            console.log("Nghe được:", data.text);
+            fullTranscript += " " + data.text;
         }
-        
-        if (data.text && data.text.trim().length > 0) {
-          fullTranscript += " " + data.text;
-          const wordCount = fullTranscript.trim().split(/\s+/).filter(w => w.length > 1).length;
-          debugInfo.textContent = `🎤 IBM đang nghe...\n✅ Đã nhận diện: ${wordCount} từ\n📝 Gần nhất: "${data.text.trim()}"`;
-          console.log("✅ IBM transcript:", data.text);
-        }
-      } catch (e) { 
-        console.error('❌ Lỗi gọi IBM:', e);
-        debugInfo.textContent = `❌ LỖI IBM: ${e.message}\n\n⚠️ Kiểm tra:\n1. Đã set IBM_API_KEY trong Vercel?\n2. Đã set IBM_URL trong Vercel?\n3. Xem Console (F12) để biết chi tiết`;
-        debugInfo.style.color = '#ff4444';
-      } finally {
-        pendingRequests--; // ✅ Giảm số request đang chờ
-      }
+      } catch (e) { console.error(e); }
     }
 
     function finishSession() {
+      isProcessing = false;
       clearInterval(timerInterval);
+      clearInterval(chunkInterval);
       
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-        mediaRecorder.stop();
-      }
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      if (streamReference) streamReference.getTracks().forEach(track => track.stop());
       
-      if(streamReference) {
-        streamReference.getTracks().forEach(track => track.stop());
-      }
-      
-      mainBtn.textContent = "Đợi IBM xử lý...";
-      debugInfo.textContent = '⏳ Đang đợi IBM Cloud xử lý xong...';
-      
-      // ✅ Đợi tất cả request IBM trả về (tối đa 5 giây)
-      const checkAndCalculate = () => {
-        if (pendingRequests === 0) {
-          calculateResult();
-        } else {
-          debugInfo.textContent = `⏳ Còn ${pendingRequests} chunk đang xử lý...`;
-          setTimeout(checkAndCalculate, 500);
-        }
-      };
-      
-      setTimeout(checkAndCalculate, 1000); // Đợi 1s cho chunk cuối cùng
+      mainBtn.textContent = "Đang chấm điểm...";
+      setTimeout(calculateResult, 3000); 
     }
 
-    // ✅ LOGIC ĐƠN GIẢN: IBM nghe được = XANH, không nghe được = ĐỎ
     function calculateResult() {
-      mainBtn.textContent = "Đang chấm điểm...";
-      
-      // ✅ KIỂM TRA: Nếu IBM không trả về gì → Báo lỗi
-      if (!fullTranscript || fullTranscript.trim().length === 0) {
-        alert("⚠️ LỖI: IBM Cloud không nghe được gì!\n\nNguyên nhân có thể:\n1. Chưa cấu hình đúng SPEECH_TO_TEXT_APIKEY và SPEECH_TO_TEXT_URL trong Vercel\n2. Micro không hoạt động\n3. Không có âm thanh hoặc nói quá nhỏ\n4. IBM Service đang bị lỗi\n\nVui lòng:\n- Kiểm tra Console (F12) xem lỗi chi tiết\n- Thử nói to và rõ hơn\n- Kiểm tra mic đã bật chưa");
-        mainBtn.disabled = false;
-        mainBtn.textContent = "🔄 Thử lại";
-        mainBtn.classList.add('btn-retry');
-        return;
-      }
-      
-      const spokenWords = fullTranscript.toLowerCase()
-        .split(/\s+/)
-        .map(w => w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()«»""'']/g, ''))
-        .filter(w => w.length > 1);
-
+      const allSpokenWords = fullTranscript.toLowerCase();
       const domWords = document.querySelectorAll('.word');
       let correctCount = 0;
 
-      console.log("📊 Chấm điểm:");
-      console.log("- Text gốc:", domWords.length, "từ");
-      console.log("- IBM nghe được:", spokenWords);
-      
-      debugInfo.textContent = `🔍 Đang so sánh...\n📝 Text gốc: ${domWords.length} từ\n🎤 IBM nghe được: ${spokenWords.length} từ`;
-
       domWords.forEach(span => {
         const original = span.dataset.clean;
-        if (!original || original.length <= 1) return;
-
-        // ✅ ĐÚNG = IBM có nghe từ này không?
-        if (spokenWords.includes(original)) {
+        if (original && allSpokenWords.includes(original)) {
           span.classList.add('correct');
           correctCount++;
         } else {
@@ -427,8 +339,6 @@
       });
 
       const score = Math.round((correctCount / domWords.length) * 100);
-      
-      console.log("✅ Kết quả:", correctCount, "/", domWords.length, "=", score + "%");
 
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
@@ -438,7 +348,7 @@
         modalMsg.innerHTML = "Chúc mừng!<br>Bạn là người Pháp 🇫🇷🍷";
       } else {
         resultModal.classList.add('chicken-mode');
-        modalMsg.innerHTML = "Chia buồn!<br>Bạn là con gà e 🐔🤣";
+        modalMsg.innerHTML = "Chia buồn!<br>Bạn là con gàe 🐔🤣";
       }
       modalScore.textContent = `${score}%`;
 
@@ -446,8 +356,6 @@
       mainBtn.textContent = "🔄 Làm lại";
       mainBtn.classList.add('btn-retry');
       mainBtn.classList.remove('btn-main');
-      
-      debugInfo.textContent = `✅ Kết quả:\n🟢 Phát âm đúng: ${correctCount}/${domWords.length}\n🔴 Chưa đúng: ${domWords.length - correctCount}\n\n📊 Chi tiết IBM nghe được:\n${spokenWords.slice(0, 20).join(', ')}${spokenWords.length > 20 ? '...' : ''}`;
     }
 
     function closeResult() {
@@ -455,9 +363,7 @@
       textDisplayArea.classList.add('review-mode');
     }
 
-    window.onload = function() {
-      randomizeLesson();
-    };
+    window.onload = function() { randomizeLesson(); };
   </script>
 </body>
 </html>
