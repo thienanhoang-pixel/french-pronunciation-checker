@@ -246,11 +246,21 @@
        fullTranscript = "";
        debugInfo.textContent = "";
        
-       // Dừng Mic
-       if(mediaRecorder && mediaRecorder.state !== 'inactive') {
-         try { mediaRecorder.stop(); } catch(e){}
-       }
-       mediaRecorder = null;
+      // Dừng Mic - xóa event handler trước để tránh race condition
+      if(mediaRecorder) {
+        // Xóa event handler để tránh onstop được gọi sau khi reset
+        mediaRecorder.onstop = null;
+        mediaRecorder.ondataavailable = null;
+        
+        if(mediaRecorder.state !== 'inactive') {
+          try { 
+            mediaRecorder.stop(); 
+          } catch(e){
+            console.error('Error stopping MediaRecorder in reset:', e);
+          }
+        }
+      }
+      mediaRecorder = null;
        
        if(streamReference) {
          try { streamReference.getTracks().forEach(track => track.stop()); } catch(e){}
@@ -352,15 +362,49 @@
         if (e.data.size > 0) sendToIBM(e.data, sessionForThisRecorder);
       };
 
+      // Xử lý khi MediaRecorder dừng để restart an toàn
+      mediaRecorder.onstop = () => {
+        // Kiểm tra kỹ: mediaRecorder vẫn tồn tại, session vẫn hợp lệ, và stream vẫn active
+        if (!mediaRecorder || currentSessionId !== sessionForThisRecorder) {
+          return; // Session đã thay đổi, không restart
+        }
+        
+        // Chỉ restart nếu vẫn còn thời gian và stream vẫn còn active
+        if (timeLeft > 0 && streamReference && streamReference.active) {
+          // Đảm bảo MediaRecorder đã ở trạng thái inactive trước khi start lại
+          if (mediaRecorder.state === 'inactive') {
+            try {
+              mediaRecorder.start();
+            } catch (e) {
+              console.error('Error restarting MediaRecorder:', e);
+              // Nếu không restart được, có thể stream đã bị đóng
+            }
+          }
+        }
+      };
+
       mediaRecorder.start();
 
-      // Chunking 4s
+      // Chunking 4s - chỉ stop, restart sẽ được xử lý trong onstop
       chunkInterval = setInterval(() => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-            if (timeLeft > 0 && currentSessionId === sessionForThisRecorder) {
-                mediaRecorder.start();
+          // Kiểm tra session vẫn hợp lệ trước khi stop
+          if (timeLeft > 0 && currentSessionId === sessionForThisRecorder) {
+            try {
+              mediaRecorder.stop();
+            } catch (e) {
+              console.error('Error stopping MediaRecorder:', e);
             }
+          } else {
+            // Nếu hết thời gian hoặc session không hợp lệ, dừng luôn
+            if (mediaRecorder.state === 'recording') {
+              try {
+                mediaRecorder.stop();
+              } catch (e) {
+                console.error('Error stopping MediaRecorder:', e);
+              }
+            }
+          }
         }
       }, 4000);
 
@@ -402,8 +446,25 @@
       stopTimer();
       if (chunkInterval) clearInterval(chunkInterval);
       
-      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-      if (streamReference) streamReference.getTracks().forEach(track => track.stop());
+      // Dừng MediaRecorder an toàn - xóa handler để tránh restart
+      if (mediaRecorder) {
+        mediaRecorder.onstop = null; // Ngăn không cho restart
+        if (mediaRecorder.state !== 'inactive') {
+          try {
+            mediaRecorder.stop();
+          } catch (e) {
+            console.error('Error stopping MediaRecorder in finishSession:', e);
+          }
+        }
+      }
+      
+      if (streamReference) {
+        try {
+          streamReference.getTracks().forEach(track => track.stop());
+        } catch (e) {
+          console.error('Error stopping stream tracks:', e);
+        }
+      }
       
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang chấm điểm...";
