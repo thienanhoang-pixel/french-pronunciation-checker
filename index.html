@@ -85,7 +85,7 @@
       display: inline-block; font-size: 24px; line-height: 1.8;
       padding: 0 2px; border-radius: 4px; color: #333; margin-right: 4px;
     }
-    .word.correct { background-color: #48bb78; color: #fff; }
+    .word.correct { background-color: #48bb78; color: #fff; border-bottom: 2px solid #2f855a; }
     .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.6; }
 
     .controls {
@@ -116,6 +116,7 @@
     .result-score { font-size: 60px; font-weight: 900; margin: 15px 0; }
     .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; color: #333; }
     
+    /* Giao diện modal theo kết quả */
     .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 30px #48bb78; }
     .french-mode .result-score { color: #48bb78; }
     .french-mode .result-msg { color: #2f855a; }
@@ -171,7 +172,7 @@
 
   <script>
     // ==========================================
-    // DATA
+    // THƯ VIỆN BÀI ĐỌC
     // ==========================================
     const readingLibrary = [
       { topic: "Khám phá Paris", text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles." },
@@ -187,18 +188,22 @@
     ];
 
     // ==========================================
-    // LOGIC HỆ THỐNG (FIXED SESSION ID)
+    // LOGIC HỆ THỐNG (V4 - FIX RACE CONDITIONS)
     // ==========================================
     let currentIdx = 0;
     let mediaRecorder = null;
     let fullTranscript = "";
+    
+    // Biến quản lý trạng thái
     let timerInterval = null;
     let chunkInterval = null;
+    let resultTimeout = null; // QUAN TRỌNG: Quản lý timeout chờ kết quả
+    
     const TIME_LIMIT = 60;
     let timeLeft = TIME_LIMIT;
     let streamReference = null;
     
-    // 🔥 SESSION ID: Chìa khóa để sửa lỗi xung đột dữ liệu
+    // Session ID để tránh nhận kết quả của phiên cũ
     let currentSessionId = 0;
     
     // DOM Elements
@@ -212,25 +217,35 @@
     const modalScore = document.getElementById('modalScore');
     const modalMsg = document.getElementById('modalMsg');
 
+    // HÀM DỌN DẸP SẠCH SẼ MỌI THỨ
     function forceStop() {
-       clearInterval(timerInterval);
-       clearInterval(chunkInterval);
+       // 1. Dừng các bộ đếm
+       if (timerInterval) clearInterval(timerInterval);
+       if (chunkInterval) clearInterval(chunkInterval);
+       if (resultTimeout) clearTimeout(resultTimeout); // Hủy lệnh chấm điểm đang chờ
+       
        timerInterval = null;
        chunkInterval = null;
+       resultTimeout = null;
        
-       // Tăng SessionID để chặn mọi dữ liệu cũ đang trên đường về
+       // 2. Tăng Session ID để vô hiệu hóa mọi dữ liệu cũ đang trên đường về
        currentSessionId++; 
        
+       // 3. Reset transcript
+       fullTranscript = "";
+       
+       // 4. Dừng ghi âm và stream
        if(mediaRecorder && mediaRecorder.state !== 'inactive') {
-         mediaRecorder.stop();
+         try { mediaRecorder.stop(); } catch(e){}
        }
-       // Dừng mic thật kỹ
+       mediaRecorder = null; // Hủy biến
+       
        if(streamReference) {
-         streamReference.getTracks().forEach(track => track.stop());
+         try { streamReference.getTracks().forEach(track => track.stop()); } catch(e){}
          streamReference = null;
        }
        
-       // Reset UI
+       // 5. Reset giao diện
        mainBtn.disabled = false;
        mainBtn.textContent = "Démarrer (Bắt đầu)";
        mainBtn.classList.remove('btn-retry');
@@ -239,8 +254,7 @@
     }
 
     function loadText(index) {
-      forceStop(); // Reset toàn bộ
-      fullTranscript = ""; // Xóa chữ cũ
+      forceStop(); // Gọi hàm dọn dẹp trước khi làm bất cứ thứ gì
       
       const data = readingLibrary[index];
       topicDisplay.textContent = data.topic;
@@ -254,7 +268,7 @@
         contentWrapper.appendChild(span);
       });
       
-      textDisplayArea.className = 'text-display';
+      textDisplayArea.className = 'text-display'; // Xóa chế độ review
       contentWrapper.className = '';
       timerDisplay.textContent = "01:00";
       timeLeft = TIME_LIMIT;
@@ -276,7 +290,7 @@
         streamReference = stream;
         startSession(stream);
       } catch (err) {
-        alert("Lỗi Micro: " + err.message + "\nVui lòng cho phép quyền truy cập Micro!");
+        alert("Lỗi Micro: " + err.message + "\nVui lòng cho phép quyền truy cập Micro hoặc thử trình duyệt khác.");
       }
     });
 
@@ -294,16 +308,15 @@
     }
 
     function startSession(stream) {
-      // Tạo ID phiên mới
-      currentSessionId = Date.now();
+      currentSessionId = Date.now(); // Tạo ID phiên mới
       
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang nghe...";
       contentWrapper.classList.add('scrolling');
-      fullTranscript = ""; // Reset chữ lần nữa
+      fullTranscript = ""; // Reset lần nữa cho chắc
       
       mediaRecorder = new MediaRecorder(stream);
-      const sessionForThisRecorder = currentSessionId; // Lưu ID cho recorder này
+      const sessionForThisRecorder = currentSessionId; 
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) sendToIBM(e.data, sessionForThisRecorder);
@@ -313,7 +326,7 @@
 
       // Cắt file 4s (Fix cho Cốc Cốc)
       chunkInterval = setInterval(() => {
-        if (mediaRecorder.state === 'recording') {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
             // Chỉ start lại nếu còn thời gian và ID phiên vẫn đúng
             if (timeLeft > 0 && currentSessionId === sessionForThisRecorder) {
@@ -333,7 +346,7 @@
     }
 
     async function sendToIBM(blob, sessionId) {
-      // Nếu ID phiên không khớp (nghĩa là user đã bấm Next/Retry), thì vứt bỏ dữ liệu này
+      // Nếu ID phiên không khớp (nghĩa là user đã bấm Next/Retry), thì vứt bỏ
       if (sessionId !== currentSessionId) return;
 
       if (blob.size < 1000) return;
@@ -343,7 +356,6 @@
         const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
         const data = await res.json();
         
-        // Kiểm tra lại lần nữa trước khi cộng chuỗi
         if (sessionId !== currentSessionId) return;
 
         if (data.text) {
@@ -354,26 +366,40 @@
     }
 
     function finishSession() {
-      clearInterval(timerInterval);
-      clearInterval(chunkInterval);
+      // Dừng hết các interval
+      if (timerInterval) clearInterval(timerInterval);
+      if (chunkInterval) clearInterval(chunkInterval);
       
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
       if (streamReference) streamReference.getTracks().forEach(track => track.stop());
       
       mainBtn.textContent = "Đang chấm điểm...";
       
-      // Đợi 3s để các gói tin cuối cùng về đích
-      setTimeout(calculateResult, 3000); 
+      // Đợi 2.5s để IBM trả về nốt các chunk cuối, gán vào biến global resultTimeout
+      // để có thể clear nó nếu user bấm "Làm lại" ngay lập tức
+      resultTimeout = setTimeout(() => {
+          try {
+              calculateResult();
+          } catch (e) {
+              console.error("Lỗi khi chấm điểm:", e);
+              alert("Có lỗi khi tính điểm. Vui lòng thử lại.");
+              // Vẫn hiện modal để không bị treo
+              modalScore.textContent = "Error";
+              resultModal.className = 'result-modal active';
+              mainBtn.disabled = false;
+          }
+      }, 2500); 
     }
 
     function calculateResult() {
-      // Tại thời điểm này, fullTranscript đã chứa đủ dữ liệu của phiên hiện tại
+      // Chắc chắn rằng modal sẽ hiện ra
       const allSpokenWords = fullTranscript.toLowerCase();
       const domWords = document.querySelectorAll('.word');
       let correctCount = 0;
 
       domWords.forEach(span => {
         const original = span.dataset.clean;
+        // Logic tô màu
         if (original && allSpokenWords.includes(original)) {
           span.classList.add('correct');
           correctCount++;
@@ -382,7 +408,7 @@
         }
       });
 
-      const score = Math.round((correctCount / domWords.length) * 100);
+      const score = Math.round((correctCount / domWords.length) * 100) || 0; // Tránh NaN
 
       // --- HIỂN THỊ KẾT QUẢ ---
       resultModal.className = 'result-modal active';
@@ -409,6 +435,7 @@
       textDisplayArea.classList.add('review-mode');
     }
 
+    // Init bài đầu tiên
     window.onload = function() { randomizeLesson(); };
   </script>
 </body>
