@@ -84,7 +84,6 @@
       display: inline-block; font-size: 24px; line-height: 1.8;
       padding: 0 2px; border-radius: 4px; color: #333; margin-right: 4px;
     }
-    /* Chỉnh lại màu sai cho dễ nhìn hơn */
     .word.correct { background-color: #48bb78; color: #fff; border-bottom: 2px solid #2f855a; }
     .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.5; }
 
@@ -132,7 +131,6 @@
       border-radius: 4px; font-size: 12px; z-index: 10;
       text-transform: uppercase; letter-spacing: 1px;
     }
-    /* Debug box nhỏ để bạn biết hệ thống đang nghe gì */
     #debugInfo {
         position: fixed; bottom: 5px; left: 5px; 
         font-size: 10px; color: rgba(255,255,255,0.5); 
@@ -179,7 +177,7 @@
 
   <script>
     // ==========================================
-    // 10 BÀI ĐỌC DÀI (CHUẨN)
+    // DỮ LIỆU BÀI ĐỌC
     // ==========================================
     const readingLibrary = [
       { topic: "Khám phá Paris", text: "Paris est souvent appelée la ville lumière, et pour cause. Quand le soleil se couche, les monuments s'illuminent et créent une atmosphère magique et romantique. Se promener sur les quais de la Seine est une expérience inoubliable pour les touristes du monde entier. On peut admirer la cathédrale Notre-Dame, le musée du Louvre et bien sûr, la majestueuse tour Eiffel qui brille dans la nuit. Mais Paris, ce n'est pas seulement des monuments. C'est aussi l'odeur du café frais le matin, les boulangeries qui vendent des croissants chauds et les artistes qui peignent dans les rues de Montmartre. C'est une ville qui vit, qui respire et qui inspire les poètes depuis des siècles." },
@@ -195,13 +193,13 @@
     ];
 
     // ==========================================
-    // LOGIC HỆ THỐNG (FIXED MATCHING & RESET)
+    // LOGIC HỆ THỐNG
     // ==========================================
     let currentIdx = 0;
     let mediaRecorder = null;
     let fullTranscript = "";
     
-    // Biến quản lý Interval
+    // Quản lý Timer & Interval
     let timerInterval = null;
     let chunkInterval = null;
     let resultTimeout = null;
@@ -223,25 +221,32 @@
     const modalMsg = document.getElementById('modalMsg');
     const debugInfo = document.getElementById('debugInfo');
 
-    // --- HÀM NUCLEAR RESET (XÓA SẠCH SẼ) ---
+    // --- HÀM 1: DỪNG TOÀN BỘ TIMER (KILL SWITCH) ---
+    function stopTimer() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+    }
+
+    // --- HÀM 2: DỌN SẠCH DỮ LIỆU CŨ (NUCLEAR RESET) ---
     function nuclearReset() {
-       // 1. Dừng mọi đồng hồ
-       if (timerInterval) clearInterval(timerInterval);
+       stopTimer(); // Dừng đồng hồ trước tiên
+       
        if (chunkInterval) clearInterval(chunkInterval);
        if (resultTimeout) clearTimeout(resultTimeout);
        
-       timerInterval = null;
        chunkInterval = null;
        resultTimeout = null;
        
-       // 2. Tăng ID phiên để chặn dữ liệu cũ
+       // Tăng ID phiên để chặn dữ liệu cũ
        currentSessionId = Date.now(); 
        
-       // 3. Xóa transcript
+       // Xóa transcript
        fullTranscript = "";
        debugInfo.textContent = "";
        
-       // 4. Dừng Mic
+       // Dừng Mic
        if(mediaRecorder && mediaRecorder.state !== 'inactive') {
          try { mediaRecorder.stop(); } catch(e){}
        }
@@ -252,16 +257,20 @@
          streamReference = null;
        }
        
-       // 5. Reset UI
+       // Reset UI
        mainBtn.disabled = false;
        mainBtn.textContent = "Démarrer (Bắt đầu)";
        mainBtn.classList.remove('btn-retry');
        mainBtn.classList.add('btn-main');
        contentWrapper.classList.remove('scrolling');
+       
+       // Reset hiển thị đồng hồ về 60s ngay lập tức
+       timeLeft = TIME_LIMIT;
+       timerDisplay.textContent = "01:00";
     }
 
     function loadText(index) {
-      nuclearReset(); // Reset trước
+      nuclearReset(); 
       
       const data = readingLibrary[index];
       topicDisplay.textContent = data.topic;
@@ -277,8 +286,6 @@
       
       textDisplayArea.className = 'text-display';
       contentWrapper.className = '';
-      timerDisplay.textContent = "01:00";
-      timeLeft = TIME_LIMIT;
     }
 
     function normalizeWord(word) {
@@ -287,7 +294,6 @@
 
     // --- XỬ LÝ NÚT BẤM ---
     mainBtn.addEventListener('click', async () => {
-      // Nút làm lại -> Reset và load lại bài cũ
       if (mainBtn.classList.contains('btn-retry')) {
         loadText(currentIdx);
         return; 
@@ -316,7 +322,12 @@
     }
 
     function startSession(stream) {
-      // Không cần tăng sessionId ở đây nữa vì nuclearReset đã làm rồi
+      stopTimer(); // Đảm bảo không có timer nào đang chạy
+      
+      // *** FIX QUAN TRỌNG: RESET TIME NGAY TẠI ĐÂY ***
+      timeLeft = TIME_LIMIT; 
+      timerDisplay.textContent = "01:00";
+      
       const sessionForThisRecorder = currentSessionId; 
       
       mainBtn.disabled = true;
@@ -335,25 +346,29 @@
       chunkInterval = setInterval(() => {
         if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
-            // Start lại nếu đúng phiên và còn giờ
             if (timeLeft > 0 && currentSessionId === sessionForThisRecorder) {
                 mediaRecorder.start();
             }
         }
       }, 4000);
 
+      // *** TIMER LOGIC AN TOÀN ***
       timerInterval = setInterval(() => {
         timeLeft--;
-        timerDisplay.textContent = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
+        
+        // Hiển thị: Nếu < 0 thì vẫn hiện 00 để mắt không bị khó chịu
+        const displayTime = Math.max(0, timeLeft);
+        timerDisplay.textContent = `00:${displayTime < 10 ? '0'+displayTime : displayTime}`;
         
         if (timeLeft <= 0) {
+            stopTimer(); // Dừng đếm ngay
             finishSession();
         }
       }, 1000);
     }
 
     async function sendToIBM(blob, sessionId) {
-      if (sessionId !== currentSessionId) return; // Bỏ qua dữ liệu cũ
+      if (sessionId !== currentSessionId) return;
       if (blob.size < 1000) return;
 
       const formData = new FormData();
@@ -362,10 +377,9 @@
         const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
         const data = await res.json();
         
-        if (sessionId !== currentSessionId) return; // Check lại lần nữa
+        if (sessionId !== currentSessionId) return;
 
         if (data.text) {
-            console.log(`Nghe được: ${data.text}`);
             fullTranscript += " " + data.text;
             debugInfo.textContent = "Listening: " + fullTranscript.substring(Math.max(0, fullTranscript.length - 50));
         }
@@ -373,7 +387,7 @@
     }
 
     function finishSession() {
-      if (timerInterval) clearInterval(timerInterval);
+      stopTimer();
       if (chunkInterval) clearInterval(chunkInterval);
       
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
@@ -381,45 +395,33 @@
       
       mainBtn.textContent = "Đang chấm điểm...";
       
-      // Đợi 3s để gom kết quả
       resultTimeout = setTimeout(() => {
-          // Kiểm tra lần cuối xem phiên có bị reset trong lúc chờ không
           if(mainBtn.textContent === "Đang chấm điểm...") {
               calculateResult();
           }
       }, 3000); 
     }
 
-    // --- LOGIC CHẤM ĐIỂM MỚI (FIX LỖI XANH LUNG TUNG) ---
     function calculateResult() {
-      // 1. Tách chuỗi nghe được thành mảng từ
       const spokenWordsArray = fullTranscript.toLowerCase().split(/\s+/).map(w => normalizeWord(w));
       const domWords = document.querySelectorAll('.word');
       let correctCount = 0;
 
-      // 2. Duyệt qua từng từ trong bài đọc
       domWords.forEach(span => {
         const targetWord = span.dataset.clean;
-        
-        // Tìm xem từ này có trong danh sách đã nói không
         const foundIndex = spokenWordsArray.indexOf(targetWord);
 
         if (foundIndex !== -1) {
-          // NẾU CÓ:
           span.classList.add('correct');
           correctCount++;
-          // QUAN TRỌNG: Xóa từ đã dùng khỏi mảng spokenWordsArray
-          // Để nó không được dùng lại cho các từ giống hệt ở phía sau
           spokenWordsArray.splice(foundIndex, 1);
         } else {
-          // NẾU KHÔNG:
           span.classList.add('wrong');
         }
       });
 
       const score = Math.round((correctCount / domWords.length) * 100) || 0;
 
-      // Hiển thị Popup
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
       
@@ -432,7 +434,6 @@
       }
       modalScore.textContent = `${score}%`;
 
-      // Đổi trạng thái nút
       mainBtn.disabled = false;
       mainBtn.textContent = "🔄 Làm lại";
       mainBtn.classList.add('btn-retry');
@@ -444,7 +445,6 @@
       textDisplayArea.classList.add('review-mode');
     }
 
-    // Init
     window.onload = function() { randomizeLesson(); };
   </script>
 </body>
