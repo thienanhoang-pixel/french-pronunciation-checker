@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Luyện Phát Âm (Avec Ann)</title>
+  <title>Corriger La Prononciation Avec Ann</title>
   <link rel="icon" href="favicon.png" type="image/png">
   
   <style>
@@ -26,7 +26,13 @@
     .header { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
     .header h1 {
       color: #fff; font-size: 36px; font-weight: 800; text-transform: uppercase;
-      text-shadow: 0 0 5px #fff, 0 0 20px #ff00de; margin-bottom: 5px;
+      text-shadow: 0 0 10px #fff, 0 0 20px #00ffea, 0 0 30px #00ffea, 0 0 40px #00ffea;
+      margin-bottom: 5px; letter-spacing: 2px;
+      animation: neonPulse 2s ease-in-out infinite;
+    }
+    @keyframes neonPulse {
+      0%, 100% { text-shadow: 0 0 10px #fff, 0 0 20px #00ffea, 0 0 30px #00ffea; }
+      50% { text-shadow: 0 0 20px #fff, 0 0 30px #00ffea, 0 0 40px #00ffea, 0 0 50px #00ffea; }
     }
     .slogan {
       font-size: 14px; font-weight: 600; background: rgba(0, 0, 0, 0.7);
@@ -66,7 +72,6 @@
     }
     .word.correct { background-color: #48bb78; color: #fff; }
     .word.wrong { color: #e53e3e; text-decoration: line-through; opacity: 0.6; }
-    .word.partial { background-color: #fbbf24; color: #fff; }
     .controls {
       display: flex; gap: 15px; align-items: center; justify-content: center;
       background: rgba(0, 0, 0, 0.8); padding: 15px; border-radius: 16px; flex-shrink: 0;
@@ -112,7 +117,7 @@
   
   <div class="app-container">
     <header class="header">
-      <h1>🇫🇷 Check Prononciation Avec Ann 🇫🇷</h1>
+      <h1>🇫🇷 Corriger La Prononciation Avec Ann 🇫🇷</h1>
       <div class="slogan">🤵 Bạn là người Pháp hay là con gà e? 🐔</div>
     </header>
 
@@ -189,43 +194,10 @@
     const modalMsg = document.getElementById('modalMsg');
     const debugInfo = document.getElementById('debugInfo');
 
-    // ✅ FIX 8: Hàm so khớp mờ (Levenshtein Distance)
-    function levenshteinDistance(a, b) {
-      const matrix = [];
-      for (let i = 0; i <= b.length; i++) {
-        matrix[i] = [i];
-      }
-      for (let j = 0; j <= a.length; j++) {
-        matrix[0][j] = j;
-      }
-      for (let i = 1; i <= b.length; i++) {
-        for (let j = 1; j <= a.length; j++) {
-          if (b.charAt(i - 1) === a.charAt(j - 1)) {
-            matrix[i][j] = matrix[i - 1][j - 1];
-          } else {
-            matrix[i][j] = Math.min(
-              matrix[i - 1][j - 1] + 1,
-              matrix[i][j - 1] + 1,
-              matrix[i - 1][j] + 1
-            );
-          }
-        }
-      }
-      return matrix[b.length][a.length];
-    }
-
-    function similarity(a, b) {
-      const dist = levenshteinDistance(a, b);
-      const maxLen = Math.max(a.length, b.length);
-      return maxLen === 0 ? 1 : 1 - (dist / maxLen);
-    }
-
-    // ✅ FIX 9: Normalize từ thông minh hơn
+    // ✅ ĐƠN GIẢN: Chỉ normalize bỏ dấu câu
     function normalizeWord(word) {
       return word.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Bỏ dấu
         .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()«»""'']/g, '')
-        .replace(/\s+/g, '')
         .trim();
     }
 
@@ -323,7 +295,7 @@
         const data = await res.json();
         if (data.text) {
           fullTranscript += " " + data.text;
-          debugInfo.textContent = `🎤 Nghe được: "${data.text}"\n📊 Total: ${fullTranscript.trim().split(/\s+/).length} từ`;
+          debugInfo.textContent = `🎤 IBM nghe được: "${data.text}"\n📊 Tổng: ${fullTranscript.trim().split(/\s+/).length} từ`;
         }
       } catch (e) { 
         console.error(e);
@@ -348,52 +320,32 @@
       setTimeout(calculateResult, 2500);
     }
 
-    // ✅ FIX 10: Thuật toán chấm điểm thông minh
+    // ✅ LOGIC ĐƠN GIẢN: IBM nghe được = XANH, không nghe được = ĐỎ
     function calculateResult() {
       const spokenWords = fullTranscript.toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .split(/\s+/)
         .map(w => w.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()«»""'']/g, ''))
-        .filter(w => w.length > 1); // Loại từ quá ngắn
+        .filter(w => w.length > 1);
 
       const domWords = document.querySelectorAll('.word');
       let correctCount = 0;
-      let partialCount = 0;
 
-      debugInfo.textContent = `🔍 So sánh:\n📝 Text gốc: ${domWords.length} từ\n🎤 Bạn nói: ${spokenWords.length} từ`;
+      debugInfo.textContent = `🔍 So sánh:\n📝 Text gốc: ${domWords.length} từ\n🎤 IBM nghe được: ${spokenWords.length} từ\n\n📋 Chi tiết: ${spokenWords.join(', ')}`;
 
       domWords.forEach(span => {
         const original = span.dataset.clean;
         if (!original || original.length <= 1) return;
 
-        let bestMatch = 0;
-        let found = false;
-
-        // Tìm từ khớp nhất trong những gì người dùng nói
-        spokenWords.forEach(spoken => {
-          if (spoken === original) {
-            bestMatch = 1;
-            found = true;
-          } else {
-            const sim = similarity(original, spoken);
-            if (sim > bestMatch) bestMatch = sim;
-            if (sim >= 0.8) found = true; // 80% giống là được
-          }
-        });
-
-        if (found) {
+        // ✅ ĐÚNG = IBM có nghe từ này không?
+        if (spokenWords.includes(original)) {
           span.classList.add('correct');
           correctCount++;
-        } else if (bestMatch >= 0.6) {
-          span.classList.add('partial');
-          partialCount++;
         } else {
           span.classList.add('wrong');
         }
       });
 
-      // Tính điểm: 100% cho đúng, 50% cho gần đúng
-      const score = Math.round(((correctCount + partialCount * 0.5) / domWords.length) * 100);
+      const score = Math.round((correctCount / domWords.length) * 100);
 
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
@@ -412,7 +364,7 @@
       mainBtn.classList.add('btn-retry');
       mainBtn.classList.remove('btn-main');
       
-      debugInfo.textContent = `✅ Kết quả:\n🟢 Đúng: ${correctCount}\n🟡 Gần đúng: ${partialCount}\n🔴 Sai: ${domWords.length - correctCount - partialCount}`;
+      debugInfo.textContent = `✅ Kết quả:\n🟢 Phát âm đúng: ${correctCount}/${domWords.length}\n🔴 Chưa đúng: ${domWords.length - correctCount}`;
     }
 
     function closeResult() {
