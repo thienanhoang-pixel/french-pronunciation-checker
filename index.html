@@ -31,7 +31,7 @@
     .header { text-align: center; margin-bottom: 10px; flex-shrink: 0; }
 
     .header h1 {
-      color: #fff; font-size: 32px; font-weight: 800; text-transform: uppercase;
+      color: #fff; font-size: 30px; font-weight: 800; text-transform: uppercase;
       text-shadow: 0 0 5px #fff, 0 0 20px #ff00de; margin-bottom: 5px;
       letter-spacing: 1px;
     }
@@ -114,13 +114,16 @@
       border: 4px solid #ccc;
     }
     .result-score { font-size: 60px; font-weight: 900; margin: 15px 0; }
-    .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; }
+    /* Màu chữ thông báo kết quả */
+    .result-msg { font-size: 22px; font-weight: 600; line-height: 1.4; margin-bottom: 20px; color: #333; }
     
     .french-mode .result-box { border-color: #48bb78; box-shadow: 0 0 30px #48bb78; }
     .french-mode .result-score { color: #48bb78; }
+    .french-mode .result-msg { color: #2f855a; } /* Chữ xanh lá đậm */
     
     .chicken-mode .result-box { border-color: #ff4757; box-shadow: 0 0 30px #ff4757; }
     .chicken-mode .result-score { color: #ff4757; }
+    .chicken-mode .result-msg { color: #c53030; } /* Chữ đỏ đậm */
 
     .btn-close { background: #333; color: white; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin-top: 15px; }
     
@@ -179,7 +182,7 @@
       { topic: "Giá trị của tình bạn", text: "On dit souvent que les amis sont la famille que l'on choisit. Une amitié véritable est l'une des choses les plus précieuses dans la vie d'une personne. Un vrai ami est quelqu'un qui est là pour vous dans les moments difficiles, qui vous écoute sans vous juger et qui partage vos joies comme vos peines. Avec le temps et la distance, il est parfois difficile de garder le contact, mais les liens forts résistent à tout. Ce n'est pas la quantité d'amis qui compte, mais la qualité. Avoir une personne sur qui compter, avec qui rire et pleurer, est un cadeau inestimable qui rend la vie beaucoup plus douce." },
       { topic: "Du lịch và trải nghiệm", text: "Voyager est la meilleure école de la vie. Quand on visite un pays étranger, on ne découvre pas seulement de nouveaux paysages, on découvre aussi une nouvelle façon de penser et de vivre. On apprend à sortir de sa zone de confort, à goûter des aliments inconnus et à essayer de parler une autre langue. Ces expériences nous rendent plus ouverts, plus tolérants et plus humbles. On réalise que malgré nos différences culturelles, les êtres humains partagent les mêmes rêves et les mêmes émotions partout sur la Terre. Le voyage nous change intérieurement et nous laisse des souvenirs gravés à jamais dans notre mémoire." },
       { topic: "Thể thao và sức khỏe", text: "Le sport joue un rôle essentiel pour maintenir une bonne santé physique et mentale. Pratiquer une activité physique régulière aide à réduire le stress, à améliorer le sommeil et à renforcer le cœur. Que ce soit la course à pied, la natation, le yoga ou le football, l'important est de bouger et de se faire plaisir. Le sport nous apprend aussi des valeurs importantes comme la discipline, le respect des règles et l'esprit d'équipe. Se dépasser, fixer des objectifs et voir ses progrès procure une grande satisfaction personnelle. Comme on dit souvent : un esprit sain dans un corps sain est la clé du bonheur." },
-      { topic: "Công nghệ và cuộc sống", text: "La technologie a transformé notre façon de vivre à une vitesse incroyable. Aujourd'hui, nous pouvons communiquer instantanément avec des personnes à l'autre bout du monde, accéder à toute la connaissance humaine en un clic et travailler depuis n'importe où. Cependant, cette connexion permanente a aussi ses inconvénients. Nous passons parfois plus de temps à regarder nos téléphones qu'à parler aux gens qui sont en face de nous. Il est important de trouver un équilibre. La technologie doit rester un outil pour nous servir, et non un maître qui contrôle notre temps et notre attention. Savoir se déconnecter est devenu une compétence essentielle." },
+      { topic: "Công nghệ và cuộc sống", text: "La technologie a transformé notre façon de vivre à une vitesse incroyable. Aujourd'hui, nous pouvons communiquer instantanément với des personnes à l'autre bout du monde, accéder à toute la connaissance humaine en un clic et travailler depuis n'importe où. Cependant, cette connexion permanente a aussi ses inconvénients. Nous passons parfois plus de temps à regarder nos téléphones qu'à parler aux gens qui sont en face de nous. Il est important de trouver un équilibre. La technologie doit rester un outil pour nous servir, et non un maître qui contrôle notre temps et notre attention. Savoir se déconnecter est devenu une compétence essentielle." },
       { topic: "Hạnh phúc từ điều giản đơn", text: "Beaucoup de gens cherchent le bonheur dans la richesse, la célébrité ou la réussite professionnelle. Pourtant, le vrai bonheur se cache souvent dans les choses simples de la vie quotidienne. C'est l'odeur de la pluie en été, le sourire d'un enfant, un repas partagé avec des proches ou une promenade tranquille dans la forêt. Savoir apprécier l'instant présent est un secret que nous oublions trop souvent. La gratitude est une clé puissante : être reconnaissant pour ce que l'on a, au lieu de toujours désirer ce que l'on n'a pas. Le bonheur n'est pas une destination à atteindre, c'est une manière de voyager chaque jour." },
       { topic: "Giấc mơ và nỗ lực", text: "Avoir des rêves est ce qui donne un sens à notre existence. Que ce soit devenir médecin, voyager autour du monde, écrire un livre ou simplement fonder une famille heureuse, nos rêves nous poussent à avancer. Mais rêver ne suffit pas, il faut aussi avoir le courage d'agir. Le chemin vers le succès est souvent rempli d'obstacles et d'échecs. Ce n'est pas grave de tomber, l'important est de se relever et de continuer à essayer. La persévérance et le travail acharné sont les clés de la réussite. Ne laissez jamais personne vous dire que vos rêves sont impossibles, car votre potentiel est infini." }
     ];
@@ -215,13 +218,14 @@
        timerInterval = null;
        chunkInterval = null;
        isProcessing = false;
-       fullTranscript = ""; // Xóa dữ liệu cũ
+       fullTranscript = ""; // QUAN TRỌNG: Xóa dữ liệu cũ khi đổi bài
        
        if(mediaRecorder && mediaRecorder.state !== 'inactive') {
          mediaRecorder.stop();
        }
        if(streamReference) {
          streamReference.getTracks().forEach(track => track.stop());
+         streamReference = null;
        }
        
        mainBtn.disabled = false;
@@ -291,7 +295,7 @@
       mainBtn.disabled = true;
       mainBtn.textContent = "Đang nghe...";
       contentWrapper.classList.add('scrolling');
-      fullTranscript = "";
+      fullTranscript = ""; // Reset transcript lần nữa cho chắc
       isProcessing = true;
 
       mediaRecorder = new MediaRecorder(stream);
@@ -302,7 +306,7 @@
 
       mediaRecorder.start();
 
-      // Cắt file mỗi 4 giây
+      // Cắt file mỗi 4 giây (Logic chuẩn cho Cốc Cốc)
       chunkInterval = setInterval(() => {
         if (mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
@@ -369,7 +373,7 @@
 
       const score = Math.round((correctCount / domWords.length) * 100);
 
-      // --- KHÔI PHỤC LOGIC CÂU ĐÙA ---
+      // --- LOGIC CÂU ĐÙA ĐÃ FIX ---
       resultModal.className = 'result-modal active';
       resultModal.classList.remove('french-mode', 'chicken-mode');
       
